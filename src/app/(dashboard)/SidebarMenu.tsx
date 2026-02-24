@@ -13,8 +13,16 @@ type AccessProps = {
 
 export default function SidebarMenu({ access, email }: { access: AccessProps, email: string }) {
     const [collapsed, setCollapsed] = useState(false);
+    const [logoUrl, setLogoUrl] = useState("/logo.png");
     const pathname = usePathname();
     const router = useRouter();
+
+    // Bypass cache na montagem no cliente
+    useState(() => {
+        if (typeof window !== "undefined") {
+            setLogoUrl(`/logo.png?v=${Date.now()}`);
+        }
+    });
 
     const handleLogout = async () => {
         await fetch("/api/auth/logout", { method: "POST" });
@@ -28,8 +36,19 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
         >
             <div className="flex h-16 items-center px-4 border-b border-slate-800 shrink-0 justify-between">
                 <Link href="/" className={`flex items-center gap-3 overflow-hidden ${collapsed ? "justify-center w-full" : ""}`}>
-                    <div className="h-8 w-8 bg-blue-600/20 rounded border border-blue-500/30 flex items-center justify-center shrink-0">
-                        <ShieldCheck className="h-5 w-5 text-blue-500" />
+                    <img
+                        src={logoUrl}
+                        alt="Logo"
+                        className="h-8 w-8 object-contain shrink-0"
+                        onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            if (e.currentTarget.nextElementSibling) {
+                                (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                            }
+                        }}
+                    />
+                    <div className="h-8 w-8 bg-blue-600/20 rounded border border-blue-500/30 hidden items-center justify-center shrink-0 text-blue-500">
+                        <ShieldCheck className="h-5 w-5" />
                     </div>
                     {!collapsed && <span className="font-bold text-sm tracking-tight text-white truncate">CN Manager</span>}
                 </Link>

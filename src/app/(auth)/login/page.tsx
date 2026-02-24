@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,11 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [logoUrl, setLogoUrl] = useState("/logo.png");
+
+    useEffect(() => {
+        setLogoUrl(`/logo.png?v=${Date.now()}`);
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,7 +50,18 @@ export default function LoginPage() {
             <Card className="w-full max-w-md border-slate-800 bg-slate-900 text-slate-100">
                 <CardHeader className="space-y-3 pb-6">
                     <div className="flex justify-center mb-2">
-                        <div className="h-16 w-16 bg-blue-600/20 rounded-full flex items-center justify-center border border-blue-500/30">
+                        <img
+                            src={logoUrl}
+                            alt="Logo CNM"
+                            className="h-16 w-16 object-contain"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                if (e.currentTarget.nextElementSibling) {
+                                    (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                                }
+                            }}
+                        />
+                        <div className="h-16 w-16 bg-blue-600/20 rounded-full hidden items-center justify-center border border-blue-500/30">
                             <ShieldCheck className="h-8 w-8 text-blue-500" />
                         </div>
                     </div>
