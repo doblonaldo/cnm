@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { PlusCircle, Shield, Link2 } from "lucide-react";
+import { PlusCircle, Shield, Link2, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminGroupsPage() {
@@ -15,16 +15,19 @@ export default function AdminGroupsPage() {
     const [links, setLinks] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Criar Grupo
+    // Criar/Editar Grupo
     const [newGroupName, setNewGroupName] = useState("");
     const [creating, setCreating] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
-    // Criar Link
+    // Gerenciar Links
     const [newLinkName, setNewLinkName] = useState("");
     const [newLinkUrl, setNewLinkUrl] = useState("");
+    const [newLinkOpenInNewTab, setNewLinkOpenInNewTab] = useState(false);
     const [linkDialogOpen, setLinkDialogOpen] = useState(false);
     const [creatingLink, setCreatingLink] = useState(false);
+    const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
 
     // Gerenciar Acessos
     const [selectedGroup, setSelectedGroup] = useState<any>(null);
@@ -50,22 +53,26 @@ export default function AdminGroupsPage() {
         }
     }
 
-    async function handleCreateGroup(e: React.FormEvent) {
+    async function handleSaveGroup(e: React.FormEvent) {
         e.preventDefault();
         setCreating(true);
 
+        const url = editingGroupId ? `/api/admin/groups/${editingGroupId}` : "/api/admin/groups";
+        const method = editingGroupId ? "PUT" : "POST";
+
         try {
-            const res = await fetch("/api/admin/groups", {
-                method: "POST",
+            const res = await fetch(url, {
+                method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: newGroupName }),
             });
 
-            if (!res.ok) throw new Error("Erro ao criar grupo");
+            if (!res.ok) throw new Error(editingGroupId ? "Erro ao atualizar grupo" : "Erro ao criar grupo");
 
-            toast.success("Grupo criado!");
+            toast.success(editingGroupId ? "Grupo atualizado!" : "Grupo criado!");
             setDialogOpen(false);
             setNewGroupName("");
+            setEditingGroupId(null);
             fetchData();
         } catch (error: any) {
             toast.error(error.message);
@@ -74,31 +81,71 @@ export default function AdminGroupsPage() {
         }
     }
 
-    async function handleCreateLink(e: React.FormEvent) {
+    async function handleDeleteGroup(id: string, name: string) {
+        if (name === "Administrador") {
+            toast.error("O grupo Administrador não pode ser excluído.");
+            return;
+        }
+        if (!confirm(`Tem certeza que deseja excluir o grupo ${name}?`)) return;
+
+        try {
+            const res = await fetch(`/api/admin/groups/${id}`, { method: "DELETE" });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Erro ao excluir grupo");
+            }
+            toast.success("Grupo excluído com sucesso!");
+            fetchData();
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    }
+
+    async function handleSaveLink(e: React.FormEvent) {
         e.preventDefault();
         setCreatingLink(true);
 
+        const url = editingLinkId ? `/api/admin/links/${editingLinkId}` : "/api/admin/links";
+        const method = editingLinkId ? "PUT" : "POST";
+
         try {
-            const res = await fetch("/api/admin/links", {
-                method: "POST",
+            const res = await fetch(url, {
+                method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: newLinkName, url: newLinkUrl }),
+                body: JSON.stringify({ name: newLinkName, url: newLinkUrl, openInNewTab: newLinkOpenInNewTab }),
             });
 
             if (!res.ok) {
                 const d = await res.json();
-                throw new Error(d.error || "Erro ao criar Link");
+                throw new Error(d.error || "Erro ao salvar Link");
             }
 
-            toast.success("Link Seguro criado!");
+            toast.success(editingLinkId ? "Link atualizado com sucesso!" : "Link Seguro criado!");
             setLinkDialogOpen(false);
             setNewLinkName("");
             setNewLinkUrl("");
+            setNewLinkOpenInNewTab(false);
+            setEditingLinkId(null);
             fetchData();
         } catch (error: any) {
             toast.error(error.message);
         } finally {
             setCreatingLink(false);
+        }
+    }
+
+    async function handleDeleteLink(id: string, name: string) {
+        if (!confirm(`Tem certeza que deseja excluir o link ${name}? Isso removerá o acesso de todos os grupos.`)) return;
+        try {
+            const res = await fetch(`/api/admin/links/${id}`, { method: "DELETE" });
+            if (!res.ok) {
+                const d = await res.json();
+                throw new Error(d.error || "Erro ao excluir Link");
+            }
+            toast.success("Link excluído com sucesso!");
+            fetchData();
+        } catch (error: any) {
+            toast.error(error.message);
         }
     }
 
@@ -144,7 +191,13 @@ export default function AdminGroupsPage() {
                         <p className="text-slate-400">Gerencie roles e atribuição de visibilidade.</p>
                     </div>
 
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <Dialog open={dialogOpen} onOpenChange={(open) => {
+                        setDialogOpen(open);
+                        if (!open) {
+                            setEditingGroupId(null);
+                            setNewGroupName("");
+                        }
+                    }}>
                         <DialogTrigger asChild>
                             <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                                 <PlusCircle className="w-4 h-4 mr-2" />
@@ -153,9 +206,9 @@ export default function AdminGroupsPage() {
                         </DialogTrigger>
                         <DialogContent className="bg-slate-900 border-slate-800 text-slate-100">
                             <DialogHeader>
-                                <DialogTitle>Criar Grupo</DialogTitle>
+                                <DialogTitle>{editingGroupId ? "Editar Grupo" : "Criar Grupo"}</DialogTitle>
                             </DialogHeader>
-                            <form onSubmit={handleCreateGroup} className="space-y-4 pt-4">
+                            <form onSubmit={handleSaveGroup} className="space-y-4 pt-4">
                                 <div className="space-y-2">
                                     <Label>Nome do Grupo</Label>
                                     <Input
@@ -167,7 +220,7 @@ export default function AdminGroupsPage() {
                                     />
                                 </div>
                                 <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={creating}>
-                                    {creating ? "Criando..." : "Criar Grupo"}
+                                    {creating ? "Salvando..." : (editingGroupId ? "Salvar Alterações" : "Criar Grupo")}
                                 </Button>
                             </form>
                         </DialogContent>
@@ -195,13 +248,27 @@ export default function AdminGroupsPage() {
                                     <TableCell className="text-center text-slate-400">{g._count?.users || 0}</TableCell>
                                     <TableCell className="text-center text-slate-400">{g._count?.groupLinks || 0} acessos</TableCell>
                                     <TableCell className="text-right">
-                                        {g.name !== "Administrador" ? (
-                                            <Button variant="outline" size="sm" onClick={() => openPermissionsDialog(g)} className="border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:bg-slate-800">
-                                                Gerenciar Acessos
-                                            </Button>
-                                        ) : (
-                                            <span className="text-slate-500 text-sm italic mr-2">Acesso Irrestrito (Bypass)</span>
-                                        )}
+                                        <div className="flex justify-end items-center gap-2">
+                                            {g.name !== "Administrador" ? (
+                                                <>
+                                                    <Button variant="outline" size="sm" onClick={() => openPermissionsDialog(g)} className="border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:bg-slate-800">
+                                                        Acessos
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-blue-400 hover:bg-slate-800" onClick={() => {
+                                                        setEditingGroupId(g.id);
+                                                        setNewGroupName(g.name);
+                                                        setDialogOpen(true);
+                                                    }}>
+                                                        <Edit className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-red-400 hover:bg-slate-800" onClick={() => handleDeleteGroup(g.id, g.name)}>
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <span className="text-slate-500 text-sm italic mr-2">Bypass Integrado</span>
+                                            )}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -223,7 +290,15 @@ export default function AdminGroupsPage() {
                         <p className="text-slate-400">Cadastre as URLs que rodarão em Sandbox no Portal.</p>
                     </div>
 
-                    <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+                    <Dialog open={linkDialogOpen} onOpenChange={(open) => {
+                        setLinkDialogOpen(open);
+                        if (!open) {
+                            setEditingLinkId(null);
+                            setNewLinkName("");
+                            setNewLinkUrl("");
+                            setNewLinkOpenInNewTab(false);
+                        }
+                    }}>
                         <DialogTrigger asChild>
                             <Button className="bg-purple-600 hover:bg-purple-700 text-white">
                                 <PlusCircle className="w-4 h-4 mr-2" />
@@ -232,9 +307,9 @@ export default function AdminGroupsPage() {
                         </DialogTrigger>
                         <DialogContent className="bg-slate-900 border-slate-800 text-slate-100">
                             <DialogHeader>
-                                <DialogTitle>Cadastrar uma Nova URL Protegida</DialogTitle>
+                                <DialogTitle>{editingLinkId ? "Editar Link Seguro" : "Cadastrar uma Nova URL Protegida"}</DialogTitle>
                             </DialogHeader>
-                            <form onSubmit={handleCreateLink} className="space-y-4 pt-4">
+                            <form onSubmit={handleSaveLink} className="space-y-4 pt-4">
                                 <div className="space-y-2">
                                     <Label>Nome de Exibição</Label>
                                     <Input
@@ -256,8 +331,19 @@ export default function AdminGroupsPage() {
                                         placeholder="https://..."
                                     />
                                 </div>
+                                <div className="flex items-center justify-between border border-slate-800 p-3 rounded-lg bg-slate-950/50">
+                                    <div className="space-y-0.5">
+                                        <Label>Abrir em Nova Guia</Label>
+                                        <p className="text-xs text-slate-500">Ao invés de carregar no Portal (Iframe)</p>
+                                    </div>
+                                    <Switch
+                                        checked={newLinkOpenInNewTab}
+                                        onCheckedChange={setNewLinkOpenInNewTab}
+                                        className="data-[state=checked]:bg-purple-600"
+                                    />
+                                </div>
                                 <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={creatingLink}>
-                                    {creatingLink ? "Salvando..." : "Salvar Link Padrão"}
+                                    {creatingLink ? "Salvando..." : (editingLinkId ? "Atualizar Link" : "Salvar Link Padrão")}
                                 </Button>
                             </form>
                         </DialogContent>
@@ -266,10 +352,25 @@ export default function AdminGroupsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {links.map(link => (
-                        <div key={link.id} className="p-4 rounded-xl border border-slate-800 bg-slate-900">
-                            <div className="flex items-start justify-between mb-2">
-                                <h3 className="font-semibold text-white">{link.name}</h3>
-                                <Link2 className="w-4 h-4 text-slate-500" />
+                        <div key={link.id} className="p-4 rounded-xl border border-slate-800 bg-slate-900 group">
+                            <div className="flex items-start justify-between mb-2 gap-2">
+                                <h3 className="font-semibold text-white truncate h-6">{link.name}</h3>
+                                <div className="flex items-center space-x-1 shrink-0">
+                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-blue-400" onClick={() => {
+                                        setEditingLinkId(link.id);
+                                        setNewLinkName(link.name);
+                                        setNewLinkUrl(link.url);
+                                        setNewLinkOpenInNewTab(link.openInNewTab);
+                                        setLinkDialogOpen(true);
+                                    }}>
+                                        <Edit className="w-3 h-3" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => handleDeleteLink(link.id, link.name)}>
+                                        <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                    {link.openInNewTab && <span className="text-[10px] bg-slate-800 text-slate-400 px-1 hover:text-white rounded w-fit ml-2 uppercase" title="Abre em nova guia">Ext</span>}
+                                    <Link2 className="w-4 h-4 text-slate-500 ml-1" />
+                                </div>
                             </div>
                             <p className="text-xs text-slate-400 truncate w-full" title={link.url}>{link.url}</p>
                         </div>

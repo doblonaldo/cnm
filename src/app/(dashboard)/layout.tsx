@@ -10,7 +10,7 @@ export default async function DashboardLayout({
 }) {
     const cookieStore = await cookies();
     const token = cookieStore.get("cnm_token")?.value;
-    let userAccess: { isAdmin: boolean; links: { id: string; name: string; url: string }[] } = {
+    let userAccess: { isAdmin: boolean; links: { id: string; name: string; url: string; openInNewTab: boolean }[] } = {
         isAdmin: false,
         links: [],
     };

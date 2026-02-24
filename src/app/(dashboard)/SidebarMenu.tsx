@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 type AccessProps = {
     isAdmin: boolean;
-    links: { id: string; name: string; url: string }[];
+    links: { id: string; name: string; url: string; openInNewTab: boolean }[];
 };
 
 export default function SidebarMenu({ access, email }: { access: AccessProps, email: string }) {
@@ -54,12 +54,14 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
                             </div>
                         ) : (
                             access.links.map((link) => {
-                                const href = `/portal/${link.id}`;
-                                const isActive = pathname === href;
+                                const href = link.openInNewTab ? link.url : `/portal/${link.id}`;
+                                const isActive = !link.openInNewTab && pathname.startsWith(`/portal/${link.id}`);
                                 return (
                                     <Link
                                         key={link.id}
                                         href={href}
+                                        target={link.openInNewTab ? "_blank" : undefined}
+                                        rel={link.openInNewTab ? "noopener noreferrer" : undefined}
                                         className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive
                                             ? "bg-blue-600/10 text-blue-400 font-medium"
                                             : "text-slate-400 hover:text-white hover:bg-slate-900"

@@ -37,10 +37,11 @@ model Group {
 
 model Link {
   id          String      @id @default(cuid())
-  name        String
-  url         String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  name         String
+  url          String
+  openInNewTab Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   groupLinks  GroupLink[]
 }

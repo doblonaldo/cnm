@@ -6,6 +6,7 @@ export async function GET() {
     try {
         const groups = await prisma.group.findMany({
             include: {
+                groupLinks: true,
                 _count: {
                     select: { users: true, groupLinks: true },
                 },

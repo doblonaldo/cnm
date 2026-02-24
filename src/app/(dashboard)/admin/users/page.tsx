@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { UserPlus, CircleCheck, CircleDashed, MailWarning } from "lucide-react";
+import { UserPlus, CircleCheck, CircleDashed, MailWarning, Trash2, Send } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminUsersPage() {
@@ -65,6 +65,36 @@ export default function AdminUsersPage() {
             toast.error(error.message);
         } finally {
             setInviting(false);
+        }
+    }
+
+    async function handleDeleteUser(id: string, email: string) {
+        if (!confirm(`Tem certeza que deseja excluir o usuário ${email}?`)) return;
+        try {
+            const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Erro ao excluir usuário");
+            toast.success("Usuário excluído com sucesso");
+            fetchData();
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    }
+
+    async function handleResendInvite(email: string, groupId: string) {
+        if (!groupId) {
+            toast.error("O usuário precisa estar em um grupo para receber invite.");
+            return;
+        }
+        try {
+            const res = await fetch("/api/invites", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, groupId }),
+            });
+            if (!res.ok) throw new Error("Erro ao reenviar convite");
+            toast.success("Convite reenviado com sucesso!");
+        } catch (error: any) {
+            toast.error(error.message);
         }
     }
 
@@ -129,6 +159,7 @@ export default function AdminUsersPage() {
                             <TableHead className="text-slate-400 text-center">Status Onboarding</TableHead>
                             <TableHead className="text-slate-400 text-center">Status Acesso</TableHead>
                             <TableHead className="text-slate-400 text-right">Cadastrado em</TableHead>
+                            <TableHead className="text-slate-400 text-center w-24">Ações</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -169,6 +200,20 @@ export default function AdminUsersPage() {
                                     </TableCell>
                                     <TableCell className="text-right text-slate-500 text-sm">
                                         {new Date(user.createdAt).toLocaleDateString("pt-BR")}
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            {user.email !== "admin@cnm.local" && (
+                                                <>
+                                                    <Button variant="ghost" size="sm" onClick={() => handleResendInvite(user.email, user.groupId)} title="Reenviar Convite" className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10">
+                                                        <Send className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id, user.email)} title="Excluir Usuário" className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-400/10">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
