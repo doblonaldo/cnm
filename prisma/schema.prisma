@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String?
+  groupId      String
+  isActive     Boolean     @default(false)
+  lastLoginAt  DateTime?
+  inviteToken  String?     @unique
+  inviteStatus String      @default("PENDING") // PENDING, COMPLETED
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  group        Group       @relation(fields: [groupId], references: [id])
+}
+
+model Group {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  users       User[]
+  groupLinks  GroupLink[]
+}
+
+model Link {
+  id          String      @id @default(cuid())
+  name        String
+  url         String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  groupLinks  GroupLink[]
+}
+
+model GroupLink {
+  id        String   @id @default(cuid())
+  groupId   String
+  linkId    String
+  createdAt DateTime @default(now())
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  link      Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, linkId])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  eventType    String   // LOGIN_SUCCESS, LOGIN_FAILED, LOGOUT
+  ipAddress    String?
+  emailAttempt String?
+  createdAt    DateTime @default(now())
+}
