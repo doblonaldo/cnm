@@ -73,10 +73,13 @@ export async function POST(req: Request) {
         });
 
         const response = NextResponse.json({ message: "Login successful" });
+        const isHttps = req.headers.get("x-forwarded-proto") === "https";
+        const isLocalhost = req.url.includes("localhost") || req.url.includes("127.0.0.1");
+
         response.cookies.set("cnm_token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            secure: process.env.NODE_ENV === "production" && isHttps && !isLocalhost,
+            sameSite: "lax",
             path: "/",
             maxAge: 60 * 60 * 8, // 8h
         });

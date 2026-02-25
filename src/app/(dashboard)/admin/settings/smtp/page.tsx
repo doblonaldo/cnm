@@ -82,7 +82,7 @@ export default function SmtpSettingsPage() {
                                 value={settings.smtpHost || ''}
                                 onChange={e => setSettings({ ...settings, smtpHost: e.target.value })}
                                 placeholder="ex: smtp.gmail.com"
-                                className="bg-slate-950 border-slate-800 text-white"
+                                className="bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
                             />
                         </div>
                         <div className="space-y-2">
@@ -92,7 +92,7 @@ export default function SmtpSettingsPage() {
                                 value={settings.smtpPort || ''}
                                 onChange={e => setSettings({ ...settings, smtpPort: e.target.value })}
                                 placeholder="ex: 587 ou 465"
-                                className="bg-slate-950 border-slate-800 text-white"
+                                className="bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
                             />
                         </div>
                         <div className="space-y-2">
@@ -101,7 +101,7 @@ export default function SmtpSettingsPage() {
                                 value={settings.smtpUser || ''}
                                 onChange={e => setSettings({ ...settings, smtpUser: e.target.value })}
                                 placeholder="email@suaempresa.com"
-                                className="bg-slate-950 border-slate-800 text-white"
+                                className="bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
                             />
                         </div>
                         <div className="space-y-2">
@@ -111,7 +111,7 @@ export default function SmtpSettingsPage() {
                                 value={settings.smtpPass || ''}
                                 onChange={e => setSettings({ ...settings, smtpPass: e.target.value })}
                                 placeholder="Deixe em branco para não alterar"
-                                className="bg-slate-950 border-slate-800 text-white"
+                                className="bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
                             />
                         </div>
                         <div className="space-y-2 md:col-span-2">
@@ -120,7 +120,7 @@ export default function SmtpSettingsPage() {
                                 value={settings.smtpFrom || ''}
                                 onChange={e => setSettings({ ...settings, smtpFrom: e.target.value })}
                                 placeholder='ex: "CNM Support" <no-reply@suaempresa.com>'
-                                className="bg-slate-950 border-slate-800 text-white"
+                                className="bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
                             />
                         </div>
                         <div className="flex items-center gap-3 md:col-span-2 pt-4 border-t border-slate-800 mt-2">

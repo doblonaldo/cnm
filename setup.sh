@@ -40,6 +40,7 @@ echo "-------------------------------------------------"
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS=$ID
+    OS_LIKE=${ID_LIKE:-""}
 else
     echo "Sistema operacional não identificado."
     exit 1
@@ -47,41 +48,89 @@ fi
 
 echo ">> Sistema Detectado: $PRETTY_NAME"
 
-if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
-    echo ">> Atualizando repositórios via APT..."
-    apt-get update -y
-    
-    echo ">> Instalando curl e gnupg..."
-    apt-get install -y curl gnupg2
-    
-    echo ">> Configurando repositório do Node.js 20 LTS..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    
-    echo ">> Instalando Node.js e PostgreSQL Server..."
-    apt-get install -y nodejs postgresql postgresql-contrib
-
-elif [[ "$OS" == "centos" || "$OS" == "rhel" || "$OS" == "fedora" || "$OS" == "rocky" || "$OS" == "alma" ]]; then
-    # Assume DNF (Fedora/newer CentOS) or YUM (older)
-    PKG_MAN=$(command -v dnf || command -v yum)
-    
-    echo ">> Atualizando repositórios via $PKG_MAN..."
-    $PKG_MAN update -y
-    
-    echo ">> Instalando curl..."
-    $PKG_MAN install -y curl
-    
-    echo ">> Configurando repositório do Node.js 20 LTS..."
-    curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-    
-    echo ">> Instalando Node.js e PostgreSQL Server..."
-    $PKG_MAN install -y nodejs postgresql-server postgresql-contrib
-    
-    # Initialize and enable Postgres for RPM based distros
-    if [ ! -d "/var/lib/pgsql/data/base" ] && [ -x /usr/bin/postgresql-setup ]; then
-        postgresql-setup --initdb || true
+function install_node_postgres_apt() {
+    echo ">> Verificando dependências no APT..."
+    if ! command -v node >/dev/null 2>&1 || ! command -v psql >/dev/null 2>&1; then
+        apt-get update -y
+        apt-get install -y curl gnupg2
+        if ! command -v node >/dev/null 2>&1; then
+            echo ">> Configurando repositório do Node.js 20 LTS..."
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+            apt-get install -y nodejs
+        fi
+        if ! command -v psql >/dev/null 2>&1; then
+            echo ">> Instalando PostgreSQL Server..."
+            apt-get install -y postgresql postgresql-contrib
+        fi
+    else
+        echo ">> [OK] Node.js e PostgreSQL já estão instalados no sistema."
     fi
-    systemctl enable postgresql
-    systemctl start postgresql
+}
+
+function install_node_postgres_rpm() {
+    PKG_MAN=$(command -v dnf || command -v yum)
+    echo ">> Verificando dependências via $PKG_MAN..."
+    if ! command -v node >/dev/null 2>&1 || ! command -v psql >/dev/null 2>&1; then
+        $PKG_MAN update -y
+        $PKG_MAN install -y curl
+        if ! command -v node >/dev/null 2>&1; then
+            echo ">> Configurando repositório do Node.js 20 LTS..."
+            curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+            $PKG_MAN install -y nodejs
+        fi
+        if ! command -v psql >/dev/null 2>&1; then
+            echo ">> Instalando PostgreSQL Server..."
+            $PKG_MAN install -y postgresql-server postgresql-contrib
+            if [ ! -d "/var/lib/pgsql/data/base" ] && [ -x /usr/bin/postgresql-setup ]; then
+                postgresql-setup --initdb || true
+            fi
+        fi
+    else
+        echo ">> [OK] Node.js e PostgreSQL já estão instalados no sistema."
+    fi
+}
+
+function install_node_postgres_pacman() {
+    PKG_MAN="pacman"
+    if command -v paru >/dev/null 2>&1; then
+        PKG_MAN="paru"
+    elif command -v yay >/dev/null 2>&1; then
+        PKG_MAN="yay"
+    fi
+    echo ">> Verificando dependências via gerenciador $PKG_MAN..."
+    
+    if ! command -v node >/dev/null 2>&1 || ! command -v psql >/dev/null 2>&1; then
+        INSTALL_CMDS=""
+        if ! command -v node >/dev/null 2>&1; then
+            echo ">> Marcando Node.js e NPM para instalação..."
+            INSTALL_CMDS="$INSTALL_CMDS nodejs npm"
+        fi
+        if ! command -v psql >/dev/null 2>&1; then
+            echo ">> Marcando PostgreSQL Server para instalação..."
+            INSTALL_CMDS="$INSTALL_CMDS postgresql"
+        fi
+        
+        if [ -n "$INSTALL_CMDS" ]; then
+            # O Pacman lida bem com pacotes oficiais do arch, não precisamos forçar Paru (que quebra como root) para isso.
+            pacman -Sy --noconfirm $INSTALL_CMDS
+        fi
+        
+        # Initialize postgres if doing fresh install on Arch
+        if [ ! -d "/var/lib/postgres/data" ] || [ -z "$(ls -A /var/lib/postgres/data)" ]; then
+            echo ">> Inicializando o Data Directory do PostgreSQL..."
+            su - postgres -c "initdb -D /var/lib/postgres/data"
+        fi
+    else
+        echo ">> [OK] Node.js e PostgreSQL já estão instalados no sistema."
+    fi
+}
+
+if [[ "$OS" == "ubuntu" || "$OS" == "debian" || "$OS_LIKE" == *"ubuntu"* || "$OS_LIKE" == *"debian"* ]]; then
+    install_node_postgres_apt
+elif [[ "$OS" == "centos" || "$OS" == "rhel" || "$OS" == "fedora" || "$OS" == "rocky" || "$OS" == "alma" || "$OS_LIKE" == *"rhel"* || "$OS_LIKE" == *"fedora"* ]]; then
+    install_node_postgres_rpm
+elif [[ "$OS" == "arch" || "$OS" == "cachyos" || "$OS" == "manjaro" || "$OS_LIKE" == *"arch"* ]]; then
+    install_node_postgres_pacman
 else
     echo "Sistema '$OS' não é suportado oficialmente por este script automático."
     echo "Instale o Node.js e o PostgreSQL manualmente e tente novamente removendo a trava de Root."
