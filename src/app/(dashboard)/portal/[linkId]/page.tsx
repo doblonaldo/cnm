@@ -8,6 +8,7 @@ export default function PortalPage() {
     const params = useParams();
     const linkId = params.linkId as string;
     const [linkUrl, setLinkUrl] = useState<string | null>(null);
+    const [isOpenInNewTab, setIsOpenInNewTab] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -23,6 +24,7 @@ export default function PortalPage() {
 
                 if (target) {
                     setLinkUrl(target.url);
+                    setIsOpenInNewTab(target.openInNewTab);
                 } else {
                     setError("Link não encontrado ou você não tem permissão.");
                 }
@@ -50,6 +52,21 @@ export default function PortalPage() {
                 <ShieldAlert className="h-12 w-12 mb-4" />
                 <h2 className="text-xl font-bold mb-2">Acesso Negado</h2>
                 <p className="text-slate-400 max-w-md text-center">{error}</p>
+            </div>
+        );
+    }
+
+    if (isOpenInNewTab) {
+        return (
+            <div className="flex flex-col h-full w-full items-center justify-center bg-slate-950 p-8">
+                <ShieldAlert className="h-16 w-16 mb-4 text-emerald-500" />
+                <h2 className="text-2xl font-bold mb-2 text-white">Ambiente em Execução</h2>
+                <p className="text-slate-400 max-w-md text-center">
+                    Esta aplicação foi redirecionada e aberta de forma segura em uma nova aba do seu navegador.
+                </p>
+                <p className="text-slate-500 mt-4 text-sm max-w-md text-center">
+                    Você pode fechar esta tela ou navegar para outro serviço pelo menu lateral.
+                </p>
             </div>
         );
     }

@@ -53,7 +53,7 @@ export default function LoginPage() {
                         <img
                             src={logoUrl}
                             alt="Logo CNM"
-                            className="h-32 w-32 object-contain"
+                            className="h-64 w-64 object-contain"
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                                 if (e.currentTarget.nextElementSibling) {
@@ -61,8 +61,8 @@ export default function LoginPage() {
                                 }
                             }}
                         />
-                        <div className="h-32 w-32 bg-blue-600/20 rounded-full hidden items-center justify-center border border-blue-500/30">
-                            <ShieldCheck className="h-16 w-16 text-blue-500" />
+                        <div className="h-64 w-64 bg-blue-600/20 rounded-full hidden items-center justify-center border border-blue-500/30">
+                            <ShieldCheck className="h-32 w-32 text-blue-500" />
                         </div>
                     </div>
                     <CardTitle className="text-2xl text-center font-bold tracking-tight">

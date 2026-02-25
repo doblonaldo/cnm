@@ -69,12 +69,12 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
             className={`relative flex flex-col transition-all duration-300 ease-in-out bg-slate-950 border-r border-slate-800 ${collapsed ? "w-20" : "w-64"
                 }`}
         >
-            <div className="flex h-24 items-center px-4 border-b border-slate-800 shrink-0 justify-between">
+            <div className="flex h-40 items-center px-4 border-b border-slate-800 shrink-0 justify-between">
                 <Link href="/" className={`flex items-center gap-3 overflow-hidden ${collapsed ? "justify-center w-full" : ""}`}>
                     <img
                         src={logoUrl}
                         alt="Logo"
-                        className="h-16 w-16 object-contain shrink-0"
+                        className="h-32 w-32 object-contain shrink-0"
                         onError={(e) => {
                             e.currentTarget.style.display = 'none';
                             if (e.currentTarget.nextElementSibling) {
@@ -82,23 +82,22 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
                             }
                         }}
                     />
-                    <div className="h-16 w-16 bg-blue-600/20 rounded border border-blue-500/30 hidden items-center justify-center shrink-0 text-blue-500">
-                        <ShieldCheck className="h-10 w-10" />
+                    <div className="h-32 w-32 bg-blue-600/20 rounded border border-blue-500/30 hidden items-center justify-center shrink-0 text-blue-500">
+                        <ShieldCheck className="h-20 w-20" />
                     </div>
-                    {!collapsed && <span className="font-bold text-sm tracking-tight text-white truncate">CN Manager</span>}
                 </Link>
                 <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="absolute -right-3 top-9 bg-slate-800 border-slate-700 border rounded-full p-1 text-slate-400 hover:text-white"
+                    className="absolute -right-3 top-16 bg-slate-800 border-slate-700 border rounded-full p-1 text-slate-400 hover:text-white"
                 >
                     {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6 scrollbar-hide">
+            <div className="flex-1 overflow-hidden flex flex-col py-4 px-3 gap-6">
 
-                {/* User Specific Links */}
-                <div>
+                {/* User Specific Links - Scrollable */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                     {!collapsed && <div className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Aplicações</div>}
                     <nav className="space-y-1">
                         {access.links.length === 0 ? (
@@ -116,6 +115,11 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
                                         href={href}
                                         target={link.openInNewTab ? "_blank" : undefined}
                                         rel={link.openInNewTab ? "noopener noreferrer" : undefined}
+                                        onClick={() => {
+                                            if (link.openInNewTab) {
+                                                router.push(`/portal/${link.id}`);
+                                            }
+                                        }}
                                         className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive
                                             ? "bg-blue-600/10 text-blue-400 font-medium"
                                             : "text-slate-400 hover:text-white hover:bg-slate-900"
@@ -132,7 +136,7 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
 
                 {/* Admin Links */}
                 {access.isAdmin && (
-                    <div>
+                    <div className="shrink-0 mt-auto">
                         {!collapsed && <div className="px-3 mb-2 mt-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Administração</div>}
                         <nav className="space-y-1">
                             {[
