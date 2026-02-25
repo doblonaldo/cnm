@@ -36,7 +36,7 @@ export default function LoginPage() {
             }
 
             toast.success("Login realizado com sucesso!");
-            router.push("/admin"); // Ou outra rota inicial do dashboard
+            router.push("/"); // Dashboard Raíz (Trata isAdmin internamente)
             router.refresh();
         } catch (error: any) {
             toast.error(error.message || "Erro ao fazer login");
@@ -53,7 +53,7 @@ export default function LoginPage() {
                         <img
                             src={logoUrl}
                             alt="Logo CNM"
-                            className="h-16 w-16 object-contain"
+                            className="h-32 w-32 object-contain"
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                                 if (e.currentTarget.nextElementSibling) {
@@ -61,8 +61,8 @@ export default function LoginPage() {
                                 }
                             }}
                         />
-                        <div className="h-16 w-16 bg-blue-600/20 rounded-full hidden items-center justify-center border border-blue-500/30">
-                            <ShieldCheck className="h-8 w-8 text-blue-500" />
+                        <div className="h-32 w-32 bg-blue-600/20 rounded-full hidden items-center justify-center border border-blue-500/30">
+                            <ShieldCheck className="h-16 w-16 text-blue-500" />
                         </div>
                     </div>
                     <CardTitle className="text-2xl text-center font-bold tracking-tight">

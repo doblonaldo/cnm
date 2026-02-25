@@ -32,7 +32,13 @@ export default async function DashboardLayout({
 
             if (group) {
                 userAccess.isAdmin = group.name === "Administrador";
-                userAccess.links = group.groupLinks.map((gl) => gl.link);
+                if (userAccess.isAdmin) {
+                    userAccess.links = await prisma.link.findMany({
+                        orderBy: { name: 'asc' }
+                    });
+                } else {
+                    userAccess.links = group.groupLinks.map((gl) => gl.link);
+                }
             }
         }
     }

@@ -43,20 +43,32 @@ export async function POST(req: Request) {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         const inviteLink = `${appUrl}/invite/${inviteToken}`;
 
+        // BUSCAR CONFIGURAÇÕES DE SMTP DO BANCO (Sobrepõe as do .env se existir)
+        const settings = await prisma.appSetting.findUnique({
+            where: { id: "singleton" },
+        });
+
+        const smtpHost = settings?.smtpHost || process.env.SMTP_HOST;
+        const smtpPort = settings?.smtpPort || Number(process.env.SMTP_PORT) || 587;
+        const smtpSecure = settings?.smtpHost ? settings.smtpSecure : (process.env.SMTP_SECURE === "true" || smtpPort === 465);
+        const smtpUser = settings?.smtpUser || process.env.SMTP_USER;
+        const smtpPass = settings?.smtpPass || process.env.SMTP_PASS;
+        const smtpFrom = settings?.smtpFrom || process.env.SMTP_FROM || `"CNM Admin" <${smtpUser}>`;
+
         // DISPARO DE E-MAIL VIA SMTP COM NODEMAILER
-        if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+        if (smtpHost && smtpUser && smtpPass) {
             const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST,
-                port: Number(process.env.SMTP_PORT) || 587,
-                secure: process.env.SMTP_SECURE === "true" || Number(process.env.SMTP_PORT) === 465,
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpSecure,
                 auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
+                    user: smtpUser,
+                    pass: smtpPass,
                 },
             });
 
             await transporter.sendMail({
-                from: process.env.SMTP_FROM || `"CNM Admin" <${process.env.SMTP_USER}>`,
+                from: smtpFrom,
                 to: email,
                 subject: "Convite para acesso ao Central Network Manager (CNM)",
                 html: `

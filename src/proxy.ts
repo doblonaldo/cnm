@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 
 // Rotas que não exigem autenticação
-const publicRoutes = ["/login", "/api/auth/login", "/api/invites/complete", "/invite"];
+const publicRoutes = ["/login", "/api/auth/login", "/api/invites/complete", "/invite", "/logo.png"];
 // Estendemos /invite para ignorar o middleware de autenticação (ex: /invite/T0k3n...)
 
 export default async function proxy(request: NextRequest) {
@@ -24,11 +24,22 @@ export default async function proxy(request: NextRequest) {
         }
 
         try {
-            const verified = await verifyToken(token);
-            if (!verified) {
+            const payload = await verifyToken(token);
+            if (!payload) {
                 throw new Error("Token inválido");
             }
+
             // Opcional: Adicionar headers customizados com o ID do usuário para rotas internas
+
+            // Defesa Ativa A01: Broken Access Control: rotas Admin restritas SOMENTE a administradores
+            if (pathname.startsWith("/api/admin") || pathname.startsWith("/admin")) {
+                if (!payload.isAdmin) {
+                    if (pathname.startsWith("/api/")) {
+                        return NextResponse.json({ error: "Forbidden - Administrator access required" }, { status: 403 });
+                    }
+                    return NextResponse.redirect(new URL("/login", request.url));
+                }
+            }
         } catch (error) {
             const response = pathname.startsWith("/api/")
                 ? NextResponse.json({ error: "Unauthorized" }, { status: 401 })

@@ -6,6 +6,7 @@ type Payload = {
     userId: string;
     email: string;
     groupId: string;
+    isAdmin: boolean;
 };
 
 export const getJwtSecretKey = () => {

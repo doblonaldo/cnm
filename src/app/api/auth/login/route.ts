@@ -24,6 +24,7 @@ export async function POST(req: Request) {
 
         const user = await prisma.user.findUnique({
             where: { email },
+            include: { group: true }
         });
 
         if (!user || !user.passwordHash || !user.isActive) {
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
             userId: user.id,
             email: user.email,
             groupId: user.groupId,
+            isAdmin: user.group?.name === "Administrador",
         });
 
         // Atualiza lastLogin
