@@ -231,6 +231,29 @@ mkdir -p /var/log/cnm
 chown -R $APP_USER:$APP_USER /var/log/cnm
 chmod 777 /var/log/cnm/audit.log 
 
+echo ">> Configurando Rotação Automática de Logs (Linux Logrotate - 30 dias Max)..."
+cat <<EOF > /etc/logrotate.d/cnm
+/var/log/cnm/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 0666 $APP_USER $APP_USER
+    su $APP_USER $APP_USER
+}
+EOF
+
+echo ">> Configurando Cronjob de Limpeza do Banco de Dados PostgreSQL (1 Mês de Retenção)..."
+# Criando um script shell em /etc/cron.weekly/ que faz o curl pra limpar o banco a cada 7 dias batendo no JWT gerado
+cat <<EOF > /etc/cron.weekly/cnm-db-prune
+#!/bin/bash
+curl -X POST http://127.0.0.1:3000/api/admin/system/prune-logs \\
+     -H "Authorization: Bearer ${JWT_SECRET}"
+EOF
+chmod +x /etc/cron.weekly/cnm-db-prune
+
 echo ""
 echo "================================================="
 echo "   INFRAESTRUTURA E APLICAÇÃO CONCLUÍDAS!        "
