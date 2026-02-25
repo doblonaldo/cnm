@@ -69,8 +69,8 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
             className={`relative flex flex-col transition-all duration-300 ease-in-out bg-slate-950 border-r border-slate-800 ${collapsed ? "w-20" : "w-64"
                 }`}
         >
-            <div className="flex h-40 items-center px-4 border-b border-slate-800 shrink-0 justify-between">
-                <Link href="/" className={`flex items-center gap-3 overflow-hidden ${collapsed ? "justify-center w-full" : ""}`}>
+            <div className="flex h-40 items-center px-4 border-b border-slate-800 shrink-0 relative">
+                <Link href="/" className="flex items-center gap-3 overflow-hidden justify-center w-full">
                     <img
                         src={logoUrl}
                         alt="Logo"

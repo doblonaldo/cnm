@@ -127,6 +127,7 @@ export default function AdminGroupsPage() {
             setNewLinkOpenInNewTab(false);
             setEditingLinkId(null);
             fetchData();
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error: any) {
             toast.error(error.message);
         } finally {
@@ -144,6 +145,7 @@ export default function AdminGroupsPage() {
             }
             toast.success("Link excluído com sucesso!");
             fetchData();
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error: any) {
             toast.error(error.message);
         }
@@ -172,6 +174,7 @@ export default function AdminGroupsPage() {
             toast.success("Permissões atualizadas com sucesso!");
             setPermissionsDialogOpen(false);
             fetchData();
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error: any) {
             toast.error(error.message);
         }
