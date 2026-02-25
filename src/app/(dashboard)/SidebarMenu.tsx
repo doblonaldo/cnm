@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ShieldCheck, LogOut, LayoutDashboard, Link2, Users, Settings, PlusCircle, AlertCircle, ChevronLeft, ChevronRight, KeyRound } from "lucide-react";
+import { ShieldCheck, LogOut, LayoutDashboard, Link2, Users, Settings, PlusCircle, AlertCircle, ChevronLeft, ChevronRight, ChevronDown, KeyRound, Blocks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,8 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
     const [logoUrl, setLogoUrl] = useState("/logo.png");
     const pathname = usePathname();
     const router = useRouter();
+
+    const [openAccordion, setOpenAccordion] = useState<"atalhos" | "aplicacoes" | null>(null);
 
     // Bypass cache após a montagem inicial no cliente (evita Hydration Error)
     const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
@@ -96,42 +98,90 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
 
             <div className="flex-1 overflow-hidden flex flex-col py-4 px-3 gap-6">
 
-                {/* User Specific Links - Scrollable */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    {!collapsed && <div className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Aplicações</div>}
-                    <nav className="space-y-1">
-                        {access.links.length === 0 ? (
-                            <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
-                                <AlertCircle className="w-4 h-4" />
-                                {!collapsed && "Nenhum link ativo"}
-                            </div>
-                        ) : (
-                            access.links.map((link) => {
-                                const href = link.openInNewTab ? link.url : `/portal/${link.id}`;
-                                const isActive = !link.openInNewTab && pathname.startsWith(`/portal/${link.id}`);
-                                return (
-                                    <Link
-                                        key={link.id}
-                                        href={href}
-                                        target={link.openInNewTab ? "_blank" : undefined}
-                                        rel={link.openInNewTab ? "noopener noreferrer" : undefined}
-                                        onClick={() => {
-                                            if (link.openInNewTab) {
-                                                router.push(`/portal/${link.id}`);
-                                            }
-                                        }}
-                                        className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive
-                                            ? "bg-blue-600/10 text-blue-400 font-medium"
-                                            : "text-slate-400 hover:text-white hover:bg-slate-900"
-                                            } ${collapsed ? "justify-center" : ""}`}
-                                    >
-                                        <Link2 className={`w-5 h-5 shrink-0 ${isActive ? "text-blue-500" : "text-slate-500"}`} />
-                                        {!collapsed && <span className="truncate">{link.name}</span>}
-                                    </Link>
-                                );
-                            })
-                        )}
-                    </nav>
+                {/* Accordion Container */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+
+                    {/* Accordion 1 - Atalhos de Links */}
+                    <div className="flex flex-col">
+                        <button
+                            onClick={() => setOpenAccordion(openAccordion === 'atalhos' ? null : 'atalhos')}
+                            className={`flex items-center px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${openAccordion === 'atalhos' ? "text-slate-300" : "text-slate-500 hover:text-slate-400"} ${collapsed ? "justify-center" : "justify-between"}`}
+                            title="Atalhos de Links"
+                        >
+                            {!collapsed ? (
+                                <>
+                                    <span>Atalhos de Links</span>
+                                    {openAccordion === 'atalhos' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                </>
+                            ) : (
+                                <Link2 className="w-5 h-5" />
+                            )}
+                        </button>
+
+                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'atalhos' ? 'max-h-[1000px] mt-2' : 'max-h-0'}`}>
+                            <nav className="space-y-1">
+                                {access.links.length === 0 ? (
+                                    <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
+                                        <AlertCircle className="w-4 h-4" />
+                                        {!collapsed && "Nenhum link ativo"}
+                                    </div>
+                                ) : (
+                                    access.links.map((link) => {
+                                        const href = link.openInNewTab ? link.url : `/portal/${link.id}`;
+                                        const isActive = !link.openInNewTab && pathname.startsWith(`/portal/${link.id}`);
+                                        return (
+                                            <Link
+                                                key={link.id}
+                                                href={href}
+                                                target={link.openInNewTab ? "_blank" : undefined}
+                                                rel={link.openInNewTab ? "noopener noreferrer" : undefined}
+                                                onClick={() => {
+                                                    if (link.openInNewTab) {
+                                                        router.push(`/portal/${link.id}`);
+                                                    }
+                                                }}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive
+                                                    ? "bg-blue-600/10 text-blue-400 font-medium"
+                                                    : "text-slate-400 hover:text-white hover:bg-slate-900"
+                                                    } ${collapsed ? "justify-center" : ""}`}
+                                            >
+                                                <Link2 className={`w-5 h-5 shrink-0 ${isActive ? "text-blue-500" : "text-slate-500"}`} />
+                                                {!collapsed && <span className="truncate">{link.name}</span>}
+                                            </Link>
+                                        );
+                                    })
+                                )}
+                            </nav>
+                        </div>
+                    </div>
+
+                    {/* Accordion 2 - Aplicações Internas */}
+                    <div className="flex flex-col">
+                        <button
+                            onClick={() => setOpenAccordion(openAccordion === 'aplicacoes' ? null : 'aplicacoes')}
+                            className={`flex items-center px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${openAccordion === 'aplicacoes' ? "text-slate-300" : "text-slate-500 hover:text-slate-400"} ${collapsed ? "justify-center" : "justify-between"}`}
+                            title="Aplicações"
+                        >
+                            {!collapsed ? (
+                                <>
+                                    <span>Aplicações</span>
+                                    {openAccordion === 'aplicacoes' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                </>
+                            ) : (
+                                <Blocks className="w-5 h-5" />
+                            )}
+                        </button>
+
+                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'aplicacoes' ? 'max-h-[1000px] mt-2' : 'max-h-0'}`}>
+                            <nav className="space-y-1">
+                                <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
+                                    <AlertCircle className="w-4 h-4" />
+                                    {!collapsed && "Nenhuma aplicação instalada"}
+                                </div>
+                            </nav>
+                        </div>
+                    </div>
+
                 </div>
 
                 {/* Admin Links */}
