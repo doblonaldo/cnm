@@ -24,7 +24,16 @@ async function main() {
 
     // 2. Criar ou Atualizar o Usuário Administrador Principal
     const adminEmail = 'admin@cnm.local';
-    const adminRawPassword = 'AdminPassword123!';
+
+    // Agora capturando a senha injetada pelo setup.sh via Váriavel de Ambiente no Node
+    const adminRawPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminRawPassword) {
+        console.error('\n[ERRO CRÍTICO] A variável de ambiente ADMIN_PASSWORD não foi definida.');
+        console.error('Por favor, utilize o script ./setup.sh para inicializar a plataforma de forma segura.\n');
+        process.exit(1);
+    }
+
     const hashedPassword = await bcrypt.hash(adminRawPassword, 12);
 
     const existingAdmin = await prisma.user.findUnique({
@@ -41,10 +50,10 @@ async function main() {
                 inviteStatus: 'COMPLETED',
             },
         });
-        console.log(`Usuário Admin criado!
+        console.log(`\nUsuário Admin criado!
     Email: ${adminEmail}
-    Senha: ${adminRawPassword}
-    [!] IMPORTANTE: O usuário master já nasce ativo e logará usando essa senha.`);
+    Senha: [Definida pelo Script Setup]
+    [!] IMPORTANTE: O usuário master já nasce ativo e logará usando a senha escolhida.`);
     } else {
         console.log('Usuário Admin já existe na base de dados.');
     }
