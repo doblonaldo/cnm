@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { comparePassword } from "@/lib/hash";
 import { signToken } from "@/lib/jwt";
 import rateLimit from "@/lib/rate-limit";
+import { logSystemAudit } from "@/lib/logger";
 
 const limiter = rateLimit({ uniqueTokenPerInterval: 50, interval: 60000 }); // 50 logins por minuto no maximo globalmente por IP (mitigação bruteforce simples usando memory cache /lru)
 
@@ -28,13 +29,11 @@ export async function POST(req: Request) {
         });
 
         if (!user || !user.passwordHash || !user.isActive) {
-            // Registrar falha de login (Auditoria Restrita)
-            await prisma.auditLog.create({
-                data: {
-                    eventType: "LOGIN_FAILED",
-                    ipAddress: ip,
-                    emailAttempt: email, // Opcional, util saber quem tentaram derrubar
-                },
+            // Registrar falha de login (Auditoria Restrita + OS)
+            await logSystemAudit({
+                eventType: "LOGIN_FAILED",
+                ipAddress: ip,
+                emailAttempt: email, // Opcional, util saber quem tentaram derrubar
             });
             return NextResponse.json({ error: "Invalid credentials or inactive account." }, { status: 401 });
         }
@@ -42,13 +41,11 @@ export async function POST(req: Request) {
         const isValidPassword = await comparePassword(password, user.passwordHash);
 
         if (!isValidPassword) {
-            // Registrar falha de login (Auditoria Restrita)
-            await prisma.auditLog.create({
-                data: {
-                    eventType: "LOGIN_FAILED",
-                    ipAddress: ip,
-                    emailAttempt: email,
-                },
+            // Registrar falha de login (Auditoria Restrita + OS)
+            await logSystemAudit({
+                eventType: "LOGIN_FAILED",
+                ipAddress: ip,
+                emailAttempt: email,
             });
             return NextResponse.json({ error: "Invalid credentials or inactive account." }, { status: 401 });
         }
@@ -68,13 +65,11 @@ export async function POST(req: Request) {
             data: { lastLoginAt: new Date() },
         });
 
-        // Registrar sucesso de login (Auditoria Restrita)
-        await prisma.auditLog.create({
-            data: {
-                eventType: "LOGIN_SUCCESS",
-                ipAddress: ip,
-                emailAttempt: email,
-            },
+        // Registrar sucesso de login (Auditoria Restrita + OS)
+        await logSystemAudit({
+            eventType: "LOGIN_SUCCESS",
+            ipAddress: ip,
+            emailAttempt: email,
         });
 
         const response = NextResponse.json({ message: "Login successful" });

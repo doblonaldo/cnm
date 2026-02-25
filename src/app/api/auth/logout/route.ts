@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { logSystemAudit } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -12,13 +12,11 @@ export async function POST(req: Request) {
         if (token) {
             const payload = await verifyToken(token);
             if (payload && payload.email) {
-                // Registro de Logout
-                await prisma.auditLog.create({
-                    data: {
-                        eventType: "LOGOUT",
-                        ipAddress: ip,
-                        emailAttempt: payload.email,
-                    },
+                // Registro de Logout (DB + OS)
+                await logSystemAudit({
+                    eventType: "LOGOUT",
+                    ipAddress: ip,
+                    emailAttempt: payload.email,
                 });
             }
         }
