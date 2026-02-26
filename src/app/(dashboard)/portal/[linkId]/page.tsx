@@ -1,62 +1,73 @@
-"use client";
+import { redirect } from "next/navigation";
+import { ShieldAlert } from "lucide-react";
+import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/jwt";
 
-import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
-import { Loader2, ShieldAlert } from "lucide-react";
+// 1. Convertemos para um Server Component (remoção do 'use client')
+// 2. Buscamos o banco diretamente para evitar checagens do proxy.ts
+// 3. Verificamos se o usuário ativo pertence a um grupo que tem acesso à esse link
 
-export default function PortalPage() {
-    const params = useParams();
-    const linkId = params.linkId as string;
-    const [linkUrl, setLinkUrl] = useState<string | null>(null);
-    const [isOpenInNewTab, setIsOpenInNewTab] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const iframeRef = useRef<HTMLIFrameElement>(null);
+export default async function PortalPage({ params }: { params: Promise<{ linkId: string }> }) {
+    const { linkId } = await params;
 
-    useEffect(() => {
-        async function loadLink() {
-            try {
-                const res = await fetch("/api/admin/links"); // Busca lista pra achar o URL
-                if (!res.ok) throw new Error("Erro ao buscar link");
+    // A) Autenticação
+    const cookieStore = await cookies();
+    const token = cookieStore.get("cnm_token")?.value;
 
-                const links = await res.json();
-                const target = links.find((l: any) => l.id === linkId);
-
-                if (target) {
-                    setLinkUrl(target.url);
-                    setIsOpenInNewTab(target.openInNewTab);
-                } else {
-                    setError("Link não encontrado ou você não tem permissão.");
-                }
-            } catch (err) {
-                setError("Falha ao carregar o portal.");
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadLink();
-    }, [linkId]);
-
-    if (loading) {
-        return (
-            <div className="flex flex-col h-full w-full items-center justify-center bg-slate-950 text-slate-400">
-                <Loader2 className="h-8 w-8 animate-spin mb-4 text-blue-500" />
-                <p>Carregando ambiente seguro...</p>
-            </div>
-        );
+    if (!token) {
+        redirect("/login");
     }
 
-    if (error || !linkUrl) {
+    let payload;
+    try {
+        payload = await verifyToken(token);
+        if (!payload || !payload.userId) throw new Error("Token Invalido");
+    } catch (e) {
+        redirect("/login");
+    }
+
+    const userId = payload.userId as string;
+    const userGroupId = payload.groupId as string;
+    const isAdmin = payload.isAdmin as boolean;
+
+    // B) Buscar o link alvo no DB
+    const link = await prisma.link.findUnique({
+        where: { id: linkId },
+    });
+
+    if (!link) {
         return (
             <div className="flex flex-col h-full w-full items-center justify-center bg-slate-950 text-red-500 p-8">
                 <ShieldAlert className="h-12 w-12 mb-4" />
                 <h2 className="text-xl font-bold mb-2">Acesso Negado</h2>
-                <p className="text-slate-400 max-w-md text-center">{error}</p>
+                <p className="text-slate-400 max-w-md text-center">O aplicativo solicitado não foi encontrado.</p>
             </div>
         );
     }
 
-    if (isOpenInNewTab) {
+    // C) Autorização (Checar se ele tem acesso)
+    if (!isAdmin) {
+        const hasAccess = await prisma.groupLink.findFirst({
+            where: {
+                groupId: userGroupId,
+                linkId: link.id,
+            }
+        });
+
+        if (!hasAccess) {
+            return (
+                <div className="flex flex-col h-full w-full items-center justify-center bg-slate-950 text-red-500 p-8">
+                    <ShieldAlert className="h-12 w-12 mb-4" />
+                    <h2 className="text-xl font-bold mb-2">Acesso Restrito</h2>
+                    <p className="text-slate-400 max-w-md text-center">Seu grupo de usuário não possui permissão para acessar esta aplicação.</p>
+                </div>
+            );
+        }
+    }
+
+    // D) Renderização da View de Sucesso
+    if (link.openInNewTab) {
         return (
             <div className="flex flex-col h-full w-full items-center justify-center bg-slate-950 p-8">
                 <ShieldAlert className="h-16 w-16 mb-4 text-emerald-500" />
@@ -74,13 +85,12 @@ export default function PortalPage() {
     return (
         <div className="h-full w-full flex flex-col bg-black">
             {/* 
-        IFRAME SANDBOXED:
-        A política restringe os scripts e comportamentos da página filha para isolamento de segurança.
-        Não logamos interações aqui. O CNM age apenas como um túnel de visualização seguro.
-      */}
+            IFRAME SANDBOXED:
+            A política restringe os scripts e comportamentos da página filha para isolamento de segurança.
+            Não logamos interações aqui. O CNM age apenas como um túnel de visualização seguro.
+            */}
             <iframe
-                ref={iframeRef}
-                src={linkUrl}
+                src={link.url}
                 className="w-full h-full border-none bg-white"
                 sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
                 title="Secure Portal Domain"

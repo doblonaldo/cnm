@@ -389,26 +389,31 @@ export default function AdminGroupsPage() {
                             Gerenciar acessos do Grupo: <span className="text-blue-400">{selectedGroup?.name}</span>
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                         {links.length === 0 ? (
-                            <p className="text-slate-500 py-4">Não há links cadastrados no sistema.</p>
+                            <p className="text-slate-500 py-4 col-span-full">Não há links cadastrados no sistema.</p>
                         ) : (
                             links.map(link => {
                                 const isChecked = groupLinks.includes(link.id);
                                 return (
-                                    <div key={link.id} className="flex items-center justify-between p-4 rounded-lg border border-slate-800 bg-slate-950/50">
-                                        <div>
-                                            <p className="font-medium text-slate-200">{link.name}</p>
-                                            <p className="text-xs text-slate-500 truncate w-[300px]">{link.url}</p>
+                                    <div key={link.id} className={`flex flex-col p-4 rounded-xl border transition-colors ${isChecked ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 bg-slate-900'}`}>
+                                        <div className="flex items-center mb-3 gap-2">
+                                            <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${isChecked ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
+                                                <Link2 className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="font-semibold text-white truncate" title={link.name}>{link.name}</p>
+                                            </div>
+                                            <Switch
+                                                checked={isChecked}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) setGroupLinks([...groupLinks, link.id]);
+                                                    else setGroupLinks(groupLinks.filter(id => id !== link.id));
+                                                }}
+                                                className="data-[state=checked]:bg-emerald-500 shrink-0"
+                                            />
                                         </div>
-                                        <Switch
-                                            checked={isChecked}
-                                            onCheckedChange={(checked) => {
-                                                if (checked) setGroupLinks([...groupLinks, link.id]);
-                                                else setGroupLinks(groupLinks.filter(id => id !== link.id));
-                                            }}
-                                            className="data-[state=checked]:bg-emerald-500"
-                                        />
+                                        <p className="text-xs text-slate-400 truncate w-full" title={link.url}>{link.url}</p>
                                     </div>
                                 )
                             })
