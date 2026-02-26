@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 
 // Rotas que não exigem autenticação
-const publicRoutes = ["/login", "/api/auth/login", "/api/invites/complete", "/invite", "/logo.png"];
+const publicRoutes = ["/login", "/api/auth/login", "/api/auth/google", "/api/invites/complete", "/invite", "/logo.png"];
 // Estendemos /invite para ignorar o middleware de autenticação (ex: /invite/T0k3n...)
 
 export default async function proxy(request: NextRequest) {

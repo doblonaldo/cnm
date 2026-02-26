@@ -14,7 +14,7 @@ model User {
   id           String      @id @default(cuid())
   email        String      @unique
   passwordHash String?
-  groupId      String
+  groupId      String?
   isActive     Boolean     @default(false)
   lastLoginAt  DateTime?
   inviteToken  String?     @unique
@@ -22,7 +22,7 @@ model User {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  group        Group       @relation(fields: [groupId], references: [id])
+  group        Group?      @relation(fields: [groupId], references: [id])
 }
 
 model Group {

@@ -195,11 +195,25 @@ while [ "$ADMIN_PASS" != "$ADMIN_PASS_CONFIRM" ] || [ -z "$ADMIN_PASS" ]; do
 done
 
 echo ""
+echo "-------------------------------------------------"
+echo "[EXTRA] Configuração do Google Workspace (Opcional)"
+echo "-------------------------------------------------"
+echo "Para habilitar o Login SSO Corporativo via Google, preencha as variáveis abaixo:"
+echo "(Deixe em branco pressionando ENTER se não desejar o recurso agora)"
+echo ""
+read -p "GOOGLE_CLIENT_ID (ex: 123-abc.apps.googleusercontent.com): " GOOGLE_CLIENT_ID
+read -p "GOOGLE_CLIENT_SECRET (ex: GOCSPX-123abcde): " GOOGLE_CLIENT_SECRET
+read -p "GOOGLE_WORKSPACE_DOMAIN (ex: suaempresa.com.br): " GOOGLE_WORKSPACE_DOMAIN
+
+echo ""
 echo "--> Gravando configurações no arquivo .env..."
 cat <<EOF > .env
 DATABASE_URL="${GENERATED_DB_URL}"
 JWT_SECRET="${JWT_SECRET}"
 NODE_ENV="development"
+GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID}"
+GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET}"
+GOOGLE_WORKSPACE_DOMAIN="${GOOGLE_WORKSPACE_DOMAIN}"
 EOF
 
 # Ensure the non-root calling user owns the env
