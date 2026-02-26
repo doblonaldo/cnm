@@ -1,29 +1,57 @@
 #!/bin/bash
 
 # CNM - Central Network Manager
-# Clean Script (Prepare for Production Server Copy)
+# Factory Reset / Clean Script
 
 echo "================================================="
-echo "   CNM - Cleaning Project Script                 "
+echo "   CNM - Full Project Factory Reset              "
 echo "================================================="
-echo "Limpando artefatos compilados e dependências..."
+echo "Este script apagará ABSOLUTAMENTE TUDO:"
+echo " - Dependências e caches (.next, node_modules)"
+echo " - Arquivo de configuração de chaves (.env)"
+echo " - Banco de Dados PostgreSQL (cnm) e Usuário"
+echo " - Arquivos globais de Log (/var/log/cnm)"
+echo "================================================="
 
-rm -rf .next/
-echo "[OK] Pasta .next removida."
+# Confirmação
+read -p "Deseja realmente apagar o projeto inteiro do zero? (y/N) " confirm
+if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    echo "Operação cancelada."
+    exit 0
+fi
 
-rm -rf node_modules/
-echo "[OK] Pasta node_modules removida."
-
-rm -f package-lock.json
-echo "[OK] package-lock.json (Cache do NPM) limpo."
-
-# Optional: Limpar DB local do Prisma se estivesse usando SQLite, como é Postgres, ignoramos a pasta prisma/migrations.
-# Nota: não deletamos o .env para que, se você quiser só rebuildar na própria máquina, não perca a chave de banco.
+if [ "$EUID" -ne 0 ]; then
+    echo ">> Reiniciando script com sudo..."
+    exec sudo bash "$0" "$@"
+fi
 
 echo ""
-echo "Projeto limpo e enxuto."
-echo "Para rodar o ambiente agora, execute:"
-echo "1. npm install"
-echo "2. npm run build"
-echo "3. npm run start (Produção) ou npm run dev (Dev)"
+echo ">> 1. Removendo artefatos compilados e dependências locais..."
+rm -rf .next/
+rm -rf node_modules/
+rm -f package-lock.json
+echo "[OK] Dependências locais removidas."
+
+echo ">> 2. Removendo chaves e variáveis sensíveis..."
+rm -f .env
+echo "[OK] Arquivo .env apagado."
+
+echo ">> 3. Apagando banco de dados e usuários do PostgreSQL..."
+su - postgres -c "psql -c \"DROP DATABASE IF EXISTS cnm;\"" 2>/dev/null
+su - postgres -c "psql -c \"DROP USER IF EXISTS cnm_user;\"" 2>/dev/null
+echo "[OK] Banco PostgreSQL apagado."
+
+echo ">> 4. Apagando Logs de Auditoria do Servidor..."
+rm -rf /var/log/cnm
+rm -f /etc/logrotate.d/cnm
+rm -f /etc/cron.weekly/cnm-db-prune
+echo "[OK] Logs globais deletados."
+
+echo ""
+echo "================================================="
+echo "Projeto 100% LIMPO! O ambiente físico e de banco"
+echo "voltou ao status original (Zero-State)."
+echo ""
+echo "Para instalar novamente e gerar novas chaves:"
+echo "sudo ./setup.sh"
 echo "================================================="
