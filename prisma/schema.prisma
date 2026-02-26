@@ -11,18 +11,20 @@ datasource db {
 }
 
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String?
-  groupId      String?
-  isActive     Boolean     @default(false)
-  lastLoginAt  DateTime?
-  inviteToken  String?     @unique
-  inviteStatus String      @default("PENDING") // PENDING, COMPLETED
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id               String      @id @default(cuid())
+  email            String      @unique
+  passwordHash     String?
+  groupId          String?
+  isActive         Boolean     @default(false)
+  lastLoginAt      DateTime?
+  inviteToken      String?     @unique
+  inviteStatus     String      @default("PENDING") // PENDING, COMPLETED
+  hasAcceptedTerms Boolean     @default(false)
+  acceptedTermsAt  DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
-  group        Group?      @relation(fields: [groupId], references: [id])
+  group            Group?      @relation(fields: [groupId], references: [id])
 }
 
 model Group {
