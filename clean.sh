@@ -26,11 +26,18 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 echo ""
-echo ">> 1. Removendo artefatos compilados e dependências locais..."
+echo ">> 1. Removendo artefatos compilados e processos em background..."
+if command -v pm2 &> /dev/null; then
+    pm2 delete cnm 2>/dev/null || true
+    if [ -n "$SUDO_USER" ]; then
+        su - "$SUDO_USER" -c "pm2 delete cnm" 2>/dev/null || true
+        su - "$SUDO_USER" -c "pm2 save --force" 2>/dev/null || true
+    fi
+fi
 rm -rf .next/
 rm -rf node_modules/
 rm -f package-lock.json
-echo "[OK] Dependências locais removidas."
+echo "[OK] Dependências locais removidas e processos parados."
 
 echo ">> 2. Removendo chaves e variáveis sensíveis..."
 rm -f .env

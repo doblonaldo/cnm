@@ -27,7 +27,16 @@ echo "================================================="
 echo "   ATUALIZAÇÃO CONCLUÍDA!                        "
 echo "================================================="
 echo "A nova versão já está compilada."
-echo "IMPORTANTE: Reinicie o processo Node/PM2/SystemD"
-echo "para que as alterações entrem no ar ativamente."
-echo "Ex: Ctrl+C e 'npm run start'"
+
+if command -v pm2 &> /dev/null && pm2 list 2>/dev/null | grep -q "cnm"; then
+    echo ">> Reiniciando a aplicação no PM2..."
+    pm2 restart cnm
+elif [ -n "$SUDO_USER" ] && command -v pm2 &> /dev/null && su - "$SUDO_USER" -c "pm2 list" 2>/dev/null | grep -q "cnm"; then
+    echo ">> Reiniciando a aplicação no PM2 (via $SUDO_USER)..."
+    su - "$SUDO_USER" -c "pm2 restart cnm"
+else
+    echo "IMPORTANTE: Reinicie o processo Node/PM2/SystemD"
+    echo "para que as alterações entrem no ar ativamente."
+    echo "Ex: Ctrl+C ou 'pm2 restart cnm'"
+fi
 echo "================================================="

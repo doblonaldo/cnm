@@ -29,7 +29,15 @@ fi
 
 echo ""
 echo "[Aviso] Todos os dados antigos no banco 'cnm' serão apagados."
-read -p "Pressione Enter para iniciar a instalação automatizada ou Ctrl+C para sair..."
+echo ""
+echo "Escolha o modo de instalação:"
+echo "1) Teste / Desenvolvimento - Interativo (Mantém o padrão)"
+echo "2) Produção - 100% Automatizado (Sem prompts, autoconfigura e roda em background)"
+read -p "Opção (1 ou 2) [1]: " INSTALL_MODE
+INSTALL_MODE=${INSTALL_MODE:-1}
+
+echo ""
+read -p "Pressione Enter para iniciar a instalação ou Ctrl+C para sair..."
 echo ""
 
 # 2. OS Detection & Package Installation
@@ -179,38 +187,50 @@ echo "-------------------------------------------------"
 JWT_SECRET=$(openssl rand -hex 32)
 echo ">> Um JWT_SECRET aleatório altamente seguro foi gerado nos bastidores."
 
-echo ""
-echo ">> Agora, precisamos definir a senha de acesso da Plataforma Web para: admin@cnm.local"
-read -s -p "Digite a senha do usuário Administrador: " ADMIN_PASS
-echo ""
-read -s -p "Confirme a senha: " ADMIN_PASS_CONFIRM
-echo ""
-
-while [ "$ADMIN_PASS" != "$ADMIN_PASS_CONFIRM" ] || [ -z "$ADMIN_PASS" ]; do
-    echo "As senhas não conferem ou são vazias. Tente novamente."
+if [ "$INSTALL_MODE" == "1" ]; then
+    echo ""
+    echo ">> Agora, precisamos definir a senha de acesso da Plataforma Web para: admin@cnm.local"
     read -s -p "Digite a senha do usuário Administrador: " ADMIN_PASS
     echo ""
     read -s -p "Confirme a senha: " ADMIN_PASS_CONFIRM
     echo ""
-done
 
-echo ""
-echo "-------------------------------------------------"
-echo "[EXTRA] Configuração do Google Workspace (Opcional)"
-echo "-------------------------------------------------"
-echo "Para habilitar o Login SSO Corporativo via Google, preencha as variáveis abaixo:"
-echo "(Deixe em branco pressionando ENTER se não desejar o recurso agora)"
-echo ""
-read -p "GOOGLE_CLIENT_ID (ex: 123-abc.apps.googleusercontent.com): " GOOGLE_CLIENT_ID
-read -p "GOOGLE_CLIENT_SECRET (ex: GOCSPX-123abcde): " GOOGLE_CLIENT_SECRET
-read -p "GOOGLE_WORKSPACE_DOMAIN (ex: suaempresa.com.br): " GOOGLE_WORKSPACE_DOMAIN
+    while [ "$ADMIN_PASS" != "$ADMIN_PASS_CONFIRM" ] || [ -z "$ADMIN_PASS" ]; do
+        echo "As senhas não conferem ou são vazias. Tente novamente."
+        read -s -p "Digite a senha do usuário Administrador: " ADMIN_PASS
+        echo ""
+        read -s -p "Confirme a senha: " ADMIN_PASS_CONFIRM
+        echo ""
+    done
+
+    echo ""
+    echo "-------------------------------------------------"
+    echo "[EXTRA] Configuração do Google Workspace (Opcional)"
+    echo "-------------------------------------------------"
+    echo "Para habilitar o Login SSO Corporativo via Google, preencha as variáveis abaixo:"
+    echo "(Deixe em branco pressionando ENTER se não desejar o recurso agora)"
+    echo ""
+    read -p "GOOGLE_CLIENT_ID (ex: 123-abc.apps.googleusercontent.com): " GOOGLE_CLIENT_ID
+    read -p "GOOGLE_CLIENT_SECRET (ex: GOCSPX-123abcde): " GOOGLE_CLIENT_SECRET
+    read -p "GOOGLE_WORKSPACE_DOMAIN (ex: suaempresa.com.br): " GOOGLE_WORKSPACE_DOMAIN
+    
+    ENV_MODE="development"
+else
+    echo ">> Modo Produção: Gerando Senha de Administrador automaticamente..."
+    ADMIN_PASS=$(openssl rand -base64 12)
+    ENV_MODE="production"
+    # No Google SSO by default in automated production install
+    GOOGLE_CLIENT_ID=""
+    GOOGLE_CLIENT_SECRET=""
+    GOOGLE_WORKSPACE_DOMAIN=""
+fi
 
 echo ""
 echo "--> Gravando configurações no arquivo .env..."
 cat <<EOF > .env
 DATABASE_URL="${GENERATED_DB_URL}"
 JWT_SECRET="${JWT_SECRET}"
-NODE_ENV="development"
+NODE_ENV="${ENV_MODE}"
 GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID}"
 GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET}"
 GOOGLE_WORKSPACE_DOMAIN="${GOOGLE_WORKSPACE_DOMAIN}"
@@ -268,21 +288,48 @@ curl -X POST http://127.0.0.1:3000/api/admin/system/prune-logs \\
 EOF
 chmod +x /etc/cron.weekly/cnm-db-prune
 
+if [ "$INSTALL_MODE" == "2" ]; then
+    echo ""
+    echo "-------------------------------------------------"
+    echo "[5/5] Configurando Execução Automática (Produção)"
+    echo "-------------------------------------------------"
+    echo ">> Compilando a aplicação..."
+    sudo -u $APP_USER npm run build
+    
+    echo ">> Instalando PM2 globalmente..."
+    npm install -g pm2
+    
+    echo ">> Iniciando aplicação no PM2..."
+    sudo -u $APP_USER pm2 start npm --name "cnm" -- start
+    sudo -u $APP_USER pm2 save
+    
+    echo ">> Configurando PM2 para iniciar com o sistema..."
+    USER_HOME=$(eval echo ~$APP_USER)
+    env PATH=$PATH:/usr/bin pm2 startup systemd -u $APP_USER --hp $USER_HOME
+fi
+
 echo ""
 echo "================================================="
 echo "   INFRAESTRUTURA E APLICAÇÃO CONCLUÍDAS!        "
 echo "================================================="
-echo ">> O Banco PostgreSQL local foi totalmente enjaulado na URL gerada."
+echo ">> O Banco PostgreSQL local foi configurado."
 echo ">> O Administrador Master (Web) foi criado com sucesso:"
 echo "   - Email: admin@cnm.local"
-echo "   - Senha: (A que você digitou acima)"
+if [ "$INSTALL_MODE" == "2" ]; then
+    echo "   - Senha Gerada: ${ADMIN_PASS}   <--- (!!!) ANOTE/GUARDE ESTA SENHA (!!!)"
+else
+    echo "   - Senha: (A que você digitou acima)"
+fi
 echo ""
-echo "Tudo PRONTO! Para iniciar a aplicação Node:"
-echo "---------------------------------------"
-echo "AMBIENTE DE DESENVOLVIMENTO:  "
-echo "   npm run dev                "
-echo ""
-echo "AMBIENTE DE PRODUÇÃO (Cloud):  "
-echo "   npm run build              "
-echo "   npm run start              "
+echo "Tudo PRONTO! Como acessar a aplicação:"
+if [ "$INSTALL_MODE" == "1" ]; then
+    echo "---------------------------------------"
+    echo "Execute para uso interativo (Desenvolvimento):"
+    echo "   npm run dev                "
+else
+    echo "---------------------------------------"
+    echo "A aplicação já está rodando em background via PM2."
+    echo "Para ver os logs: sudo -u $APP_USER pm2 logs cnm"
+    echo "Para reiniciar: sudo -u $APP_USER pm2 restart cnm"
+fi
 echo "================================================="
