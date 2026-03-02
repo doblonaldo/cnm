@@ -35,7 +35,7 @@ export default function InvitePage() {
         setLoading(true);
 
         try {
-            const res = await fetch("/api/invites/complete", {
+            const res = await fetch("/api/admin/invites/complete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ token, password }),

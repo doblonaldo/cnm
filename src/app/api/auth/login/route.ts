@@ -8,7 +8,8 @@ import { logSystemAudit } from "@/lib/logger";
 const limiter = rateLimit({ uniqueTokenPerInterval: 50, interval: 60000 }); // 50 logins por minuto no maximo globalmente por IP (mitigação bruteforce simples usando memory cache /lru)
 
 export async function POST(req: Request) {
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "unknown";
 
     try {
         await limiter.check(5, ip); // Limita cada IP a ter no máximo 5 tentativas de login a cada 60 segundos
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
         const token = await signToken({
             userId: user.id,
             email: user.email,
-            groupId: user.groupId,
+            groupId: user.groupId || undefined,
             isAdmin: user.group?.name === "Administrador",
         });
 

@@ -4,11 +4,12 @@ import { prisma } from "@/lib/db";
 export async function POST(req: Request) {
     // Basic IP/Secret Protection to prevent abuse.
     // Em Produção real, idealmente isso seria bloqueado apenas para `127.0.0.1` + um Cron Token
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "unknown";
 
-    // Authorization check via Authorization header (Bearer token matching the app's JWT_SECRET)
+    // Authorization check via Authorization header (Bearer token matching the app's CRON_SECRET)
     const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.JWT_SECRET}`) {
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return NextResponse.json({ error: "Unauthorized cron execution" }, { status: 401 });
     }
 

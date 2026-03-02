@@ -5,7 +5,7 @@ import path from "path";
 // Caminho do log da auditoria - Padrão do sistema linux
 const LOG_FILE_PATH = process.env.AUDIT_LOG_PATH || "/var/log/cnm/audit.log";
 
-type AuditEvent = "LOGIN_SUCCESS" | "LOGIN_FAILED" | "LOGOUT";
+type AuditEvent = "LOGIN_SUCCESS" | "LOGIN_FAILED" | "LOGOUT" | "TERMS_ACCEPTED";
 
 interface AuditLogOptions {
     eventType: AuditEvent;

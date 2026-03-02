@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         });
 
         // Construir Link de Convite (baseado na rota de frontend)
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://cnm.brphonia.com.br";
         const inviteLink = `${appUrl}/invite/${inviteToken}`;
 
         // BUSCAR CONFIGURAÇÕES DE SMTP DO BANCO (Sobrepõe as do .env se existir)

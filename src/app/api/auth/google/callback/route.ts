@@ -5,6 +5,8 @@ import { signToken } from "@/lib/jwt";
 import { logSystemAudit } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "unknown";
     const code = req.nextUrl.searchParams.get("code");
 
     if (!code) {
@@ -19,7 +21,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(new URL("/login?error=SSO_NOT_CONFIGURED", req.url));
     }
 
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/google/callback`;
+    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "https://cnm.brphonia.com.br"}/api/auth/google/callback`;
 
     try {
         // 1. Trocar o Authorization Code por um Access Token
@@ -63,7 +65,7 @@ export async function GET(req: NextRequest) {
         if (!email.endsWith(`@${requiredDomain}`)) {
             await logSystemAudit({
                 eventType: "LOGIN_FAILED",
-                ipAddress: req.headers.get("x-forwarded-for") || "unknown",
+                ipAddress: ip,
                 emailAttempt: email,
             });
             return NextResponse.redirect(new URL("/login?error=DOMAIN_NOT_ALLOWED", req.url));
@@ -107,7 +109,7 @@ export async function GET(req: NextRequest) {
 
         await logSystemAudit({
             eventType: "LOGIN_SUCCESS",
-            ipAddress: req.headers.get("x-forwarded-for") || "unknown",
+            ipAddress: ip,
             emailAttempt: email,
         });
 

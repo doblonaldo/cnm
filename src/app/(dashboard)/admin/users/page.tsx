@@ -45,7 +45,7 @@ export default function AdminUsersPage() {
         setInviting(true);
 
         try {
-            const res = await fetch("/api/invites", {
+            const res = await fetch("/api/admin/invites", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: inviteEmail, groupId: inviteGroup }),
@@ -86,7 +86,7 @@ export default function AdminUsersPage() {
             return;
         }
         try {
-            const res = await fetch("/api/invites", {
+            const res = await fetch("/api/admin/invites", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, groupId }),

@@ -185,7 +185,8 @@ echo "[3/4] Chaves de Segurança e Senha Máster"
 echo "-------------------------------------------------"
 
 JWT_SECRET=$(openssl rand -hex 32)
-echo ">> Um JWT_SECRET aleatório altamente seguro foi gerado nos bastidores."
+CRON_SECRET=$(openssl rand -hex 32)
+echo ">> Um JWT_SECRET e CRON_SECRET foram gerados."
 
 if [ "$INSTALL_MODE" == "1" ]; then
     echo ""
@@ -230,6 +231,7 @@ echo "--> Gravando configurações no arquivo .env..."
 cat <<EOF > .env
 DATABASE_URL="${GENERATED_DB_URL}"
 JWT_SECRET="${JWT_SECRET}"
+CRON_SECRET="${CRON_SECRET}"
 NODE_ENV="${ENV_MODE}"
 GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID}"
 GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET}"
@@ -263,7 +265,7 @@ mkdir -p /var/log/cnm
 > /var/log/cnm/audit.log 
 # Make it writable by the app user
 chown -R $APP_USER:$APP_USER /var/log/cnm
-chmod 777 /var/log/cnm/audit.log 
+chmod 660 /var/log/cnm/audit.log 
 
 echo ">> Configurando Rotação Automática de Logs (Linux Logrotate - 30 dias Max)..."
 cat <<EOF > /etc/logrotate.d/cnm
@@ -274,7 +276,7 @@ cat <<EOF > /etc/logrotate.d/cnm
     compress
     delaycompress
     notifempty
-    create 0666 $APP_USER $APP_USER
+    create 0660 $APP_USER $APP_USER
     su $APP_USER $APP_USER
 }
 EOF
@@ -284,7 +286,7 @@ echo ">> Configurando Cronjob de Limpeza do Banco de Dados PostgreSQL (1 Mês de
 cat <<EOF > /etc/cron.weekly/cnm-db-prune
 #!/bin/bash
 curl -X POST http://127.0.0.1:3000/api/admin/system/prune-logs \\
-     -H "Authorization: Bearer ${JWT_SECRET}"
+     -H "Authorization: Bearer ${CRON_SECRET}"
 EOF
 chmod +x /etc/cron.weekly/cnm-db-prune
 

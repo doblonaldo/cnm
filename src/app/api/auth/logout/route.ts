@@ -7,7 +7,8 @@ export async function POST(req: Request) {
     try {
         const cookieStore = await cookies();
         const token = cookieStore.get("cnm_token")?.value;
-        const ip = req.headers.get("x-forwarded-for") || "unknown";
+        const forwardedFor = req.headers.get("x-forwarded-for");
+        const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "unknown";
 
         if (token) {
             const payload = await verifyToken(token);
