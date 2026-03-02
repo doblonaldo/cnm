@@ -139,8 +139,8 @@ export default function BaterNapPage() {
 
             <Card className="bg-slate-900 border-slate-800 shrink-0">
                 <CardHeader>
-                    <CardTitle className="text-lg">Parâmetros de Consulta</CardTitle>
-                    <CardDescription>Selecione a PON que deseja investigar.</CardDescription>
+                    <CardTitle className="text-lg text-slate-200">Parâmetros de Consulta</CardTitle>
+                    <CardDescription className="text-slate-400">Selecione a PON que deseja investigar.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap items-end gap-4">
@@ -218,10 +218,10 @@ export default function BaterNapPage() {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 flex-1 min-h-[400px]">
                     {/* Tabela Original */}
                     <Card className="bg-slate-900 border-slate-800 flex flex-col h-full">
-                        <CardHeader className="py-4 border-b border-slate-800">
-                            <CardTitle className="text-lg flex justify-between items-center">
+                        <CardHeader className="py-2 px-4 border-b border-slate-800">
+                            <CardTitle className="text-base flex justify-between items-center text-slate-200">
                                 <span>Dados Originais</span>
-                                <span className="text-sm font-normal text-slate-500">
+                                <span className="text-sm font-normal text-slate-400">
                                     {filtrarDados(dadosOriginais).length} clientes
                                 </span>
                             </CardTitle>
@@ -229,11 +229,11 @@ export default function BaterNapPage() {
                         <CardContent className="p-0 overflow-auto flex-1 custom-scrollbar">
                             <Table>
                                 <TableHeader className="bg-slate-950/50 sticky top-0 z-10 shadow-sm">
-                                    <TableRow className="border-slate-800 hover:bg-transparent">
-                                        <TableHead className="w-16">ID</TableHead>
-                                        <TableHead>Nome</TableHead>
-                                        <TableHead>Serial</TableHead>
-                                        <TableHead className="text-right">Sinal (Rx)</TableHead>
+                                    <TableRow className="border-slate-800 hover:bg-transparent text-slate-300">
+                                        <TableHead className="w-12 text-slate-300">ID</TableHead>
+                                        <TableHead className="text-slate-300">Nome</TableHead>
+                                        <TableHead className="w-24 text-slate-300">Serial</TableHead>
+                                        <TableHead className="w-16 text-right text-slate-300">Sinal</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -248,7 +248,7 @@ export default function BaterNapPage() {
                                         filtrarDados(dadosOriginais).map((item) => (
                                             <TableRow key={item.id} className="border-slate-800/50 hover:bg-slate-800/50">
                                                 <TableCell className="font-medium text-slate-400">{item.id}</TableCell>
-                                                <TableCell className="truncate max-w-[250px] text-slate-200" title={item.nome}>
+                                                <TableCell className="truncate max-w-[500px] text-slate-200" title={item.nome}>
                                                     {item.nome}
                                                     {item.status && item.status !== "Working" && item.status !== "Offline" && (
                                                         <span className="ml-2 text-[10px] bg-red-900/30 text-red-400 px-1 py-0.5 rounded border border-red-900/50">
@@ -270,10 +270,10 @@ export default function BaterNapPage() {
 
                     {/* Tabela Atualizada */}
                     <Card className="bg-slate-900 border-slate-800 flex flex-col h-full">
-                        <CardHeader className="py-4 border-b border-slate-800 bg-slate-950/20">
-                            <CardTitle className="text-lg flex justify-between items-center text-blue-400">
+                        <CardHeader className="py-2 px-4 border-b border-slate-800 bg-slate-950/20">
+                            <CardTitle className="text-base flex justify-between items-center text-blue-400">
                                 <span>Dados Atualizados</span>
-                                <span className="text-sm font-normal text-slate-500">
+                                <span className="text-sm font-normal text-slate-400">
                                     {filtrarDados(dadosAtualizados).length} clientes
                                 </span>
                             </CardTitle>
@@ -281,11 +281,11 @@ export default function BaterNapPage() {
                         <CardContent className="p-0 overflow-auto flex-1 custom-scrollbar">
                             <Table>
                                 <TableHeader className="bg-slate-950/50 sticky top-0 z-10 shadow-sm">
-                                    <TableRow className="border-slate-800 hover:bg-transparent">
-                                        <TableHead className="w-16">ID</TableHead>
-                                        <TableHead>Nome</TableHead>
-                                        <TableHead>Serial</TableHead>
-                                        <TableHead className="text-right">Sinal (Rx)</TableHead>
+                                    <TableRow className="border-slate-800 hover:bg-transparent text-slate-300">
+                                        <TableHead className="w-12 text-slate-300">ID</TableHead>
+                                        <TableHead className="text-slate-300">Nome</TableHead>
+                                        <TableHead className="w-24 text-slate-300">Serial</TableHead>
+                                        <TableHead className="w-16 text-right text-slate-300">Sinal</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -306,7 +306,7 @@ export default function BaterNapPage() {
                                         filtrarDados(dadosAtualizados).map((item) => (
                                             <TableRow key={item.id} className="border-slate-800/50 hover:bg-slate-800/50">
                                                 <TableCell className="font-medium text-slate-400">{item.id}</TableCell>
-                                                <TableCell className="truncate max-w-[250px] text-slate-200" title={item.nome}>
+                                                <TableCell className="truncate max-w-[500px] text-slate-200" title={item.nome}>
                                                     {item.nome}
                                                     {item.status && item.status !== "Working" && item.status !== "Offline" && (
                                                         <span className="ml-2 text-[10px] bg-red-900/30 text-red-400 px-1 py-0.5 rounded border border-red-900/50">

@@ -3,20 +3,20 @@ import { consultarSNMPFtth } from './leituraSnmpFtth';
 import { converterDataHora } from './converterDataHora';
 
 const pool = mysql.createPool({
-    host: process.env.UNM2000_DB_HOST || '10.0.0.20',
-    user: process.env.UNM2000_DB_USER || 'unm2000',
-    password: process.env.UNM2000_DB_PASSWORD || 'unm2K10',
-    database: process.env.UNM2000_DB_NAME || 'integratecfgdb',
+    host: process.env.UNM2000_DB_HOST as string,
+    user: process.env.UNM2000_DB_USER as string,
+    password: process.env.UNM2000_DB_PASSWORD as string,
+    database: process.env.UNM2000_DB_NAME as string,
     waitForConnections: true,
     connectionLimit: 128,
     queueLimit: 10
 });
 
 const poolAlarme = mysql.createPool({
-    host: process.env.UNM2000_DB_HOST || '10.0.0.20',
-    user: process.env.UNM2000_DB_USER || 'unm2000',
-    password: process.env.UNM2000_DB_PASSWORD || 'unm2K10',
-    database: process.env.UNM2000_ALARM_DB_NAME || 'alarmdb',
+    host: process.env.UNM2000_DB_HOST as string,
+    user: process.env.UNM2000_DB_USER as string,
+    password: process.env.UNM2000_DB_PASSWORD as string,
+    database: process.env.UNM2000_ALARM_DB_NAME as string,
     waitForConnections: true,
     connectionLimit: 128,
     queueLimit: 10
