@@ -11,7 +11,7 @@ export default async function DashboardLayout({
 }) {
     const cookieStore = await cookies();
     const token = cookieStore.get("cnm_token")?.value;
-    let userAccess: { isAdmin: boolean; links: { id: string; name: string; url: string; openInNewTab: boolean }[] } = {
+    let userAccess: { isAdmin: boolean; links: { id: string; name: string; url: string; openInNewTab: boolean; type: string }[] } = {
         isAdmin: false,
         links: [],
     };
@@ -46,11 +46,15 @@ export default async function DashboardLayout({
                 if (user.group) {
                     userAccess.isAdmin = user.group.name === "Administrador";
                     if (userAccess.isAdmin) {
-                        userAccess.links = await prisma.link.findMany({
+                        const allLinks = await prisma.link.findMany({
                             orderBy: { name: 'asc' }
                         });
+                        userAccess.links = (allLinks as any[]).map(l => ({ id: l.id, name: l.name, url: l.url, openInNewTab: l.openInNewTab, type: l.type || "INTEGRATED" }));
                     } else {
-                        userAccess.links = user.group.groupLinks.map((gl) => gl.link);
+                        userAccess.links = user.group.groupLinks.map((gl) => {
+                            const l = gl.link as any;
+                            return { id: l.id, name: l.name, url: l.url, openInNewTab: l.openInNewTab, type: l.type || "INTEGRATED" };
+                        });
                     }
                 }
             }

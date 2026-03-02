@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 type AccessProps = {
     isAdmin: boolean;
-    links: { id: string; name: string; url: string; openInNewTab: boolean }[];
+    links: { id: string; name: string; url: string; openInNewTab: boolean; type: string }[];
 };
 
 export default function SidebarMenu({ access, email }: { access: AccessProps, email: string }) {
@@ -120,13 +120,13 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
 
                         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'atalhos' ? 'max-h-[1000px] mt-2' : 'max-h-0'}`}>
                             <nav className="space-y-1">
-                                {access.links.length === 0 ? (
+                                {access.links.filter(l => l.type !== "LOCAL").length === 0 ? (
                                     <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
                                         <AlertCircle className="w-4 h-4" />
-                                        {!collapsed && "Nenhum link ativo"}
+                                        {!collapsed && "Nenhum atalho ativo"}
                                     </div>
                                 ) : (
-                                    access.links.map((link) => {
+                                    access.links.filter(l => l.type !== "LOCAL").map((link) => {
                                         const href = link.openInNewTab ? link.url : `/portal/${link.id}`;
                                         const isActive = !link.openInNewTab && pathname.startsWith(`/portal/${link.id}`);
                                         return (
@@ -174,10 +174,32 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
 
                         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'aplicacoes' ? 'max-h-[1000px] mt-2' : 'max-h-0'}`}>
                             <nav className="space-y-1">
-                                <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
-                                    <AlertCircle className="w-4 h-4" />
-                                    {!collapsed && "Nenhuma aplicação instalada"}
-                                </div>
+                                {access.links.filter(l => l.type === "LOCAL").length === 0 ? (
+                                    <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
+                                        <AlertCircle className="w-4 h-4" />
+                                        {!collapsed && "Nenhuma aplicação instalada"}
+                                    </div>
+                                ) : (
+                                    access.links.filter(l => l.type === "LOCAL").map((link) => {
+                                        const href = link.openInNewTab ? link.url : link.url;
+                                        const isActive = pathname.startsWith(link.url);
+                                        return (
+                                            <Link
+                                                key={link.id}
+                                                href={href}
+                                                target={link.openInNewTab ? "_blank" : undefined}
+                                                rel={link.openInNewTab ? "noopener noreferrer" : undefined}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive
+                                                    ? "bg-purple-600/10 text-purple-400 font-medium"
+                                                    : "text-slate-400 hover:text-white hover:bg-slate-900"
+                                                    } ${collapsed ? "justify-center" : ""}`}
+                                            >
+                                                <Blocks className={`w-5 h-5 shrink-0 ${isActive ? "text-purple-500" : "text-slate-500"}`} />
+                                                {!collapsed && <span className="truncate">{link.name}</span>}
+                                            </Link>
+                                        );
+                                    })
+                                )}
                             </nav>
                         </div>
                     </div>

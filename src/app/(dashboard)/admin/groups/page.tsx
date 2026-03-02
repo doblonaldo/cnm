@@ -24,6 +24,7 @@ export default function AdminGroupsPage() {
     // Gerenciar Links
     const [newLinkName, setNewLinkName] = useState("");
     const [newLinkUrl, setNewLinkUrl] = useState("");
+    const [newLinkType, setNewLinkType] = useState("INTEGRATED");
     const [newLinkOpenInNewTab, setNewLinkOpenInNewTab] = useState(false);
     const [linkDialogOpen, setLinkDialogOpen] = useState(false);
     const [creatingLink, setCreatingLink] = useState(false);
@@ -112,7 +113,7 @@ export default function AdminGroupsPage() {
             const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: newLinkName, url: newLinkUrl, openInNewTab: newLinkOpenInNewTab }),
+                body: JSON.stringify({ name: newLinkName, url: newLinkUrl, type: newLinkType, openInNewTab: newLinkOpenInNewTab }),
             });
 
             if (!res.ok) {
@@ -334,10 +335,45 @@ export default function AdminGroupsPage() {
                                         placeholder="https://..."
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <Label>Tipo de Aplicação</Label>
+                                    <div className="flex gap-4 mt-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="linkType"
+                                                value="INTEGRATED"
+                                                checked={newLinkType === "INTEGRATED"}
+                                                onChange={() => {
+                                                    setNewLinkType("INTEGRATED");
+                                                    // Se for integrado, força nova aba por padrão (geralmente)
+                                                    setNewLinkOpenInNewTab(true);
+                                                }}
+                                                className="accent-purple-600"
+                                            />
+                                            <span className="text-sm text-slate-300">Sistema Externo (URL)</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="linkType"
+                                                value="LOCAL"
+                                                checked={newLinkType === "LOCAL"}
+                                                onChange={() => {
+                                                    setNewLinkType("LOCAL");
+                                                    // Se for local (App Next), abrir na mesma guia
+                                                    setNewLinkOpenInNewTab(false);
+                                                }}
+                                                className="accent-purple-600"
+                                            />
+                                            <span className="text-sm text-slate-300">App Local (Next.js)</span>
+                                        </label>
+                                    </div>
+                                </div>
                                 <div className="flex items-center justify-between border border-slate-800 p-3 rounded-lg bg-slate-950/50">
                                     <div className="space-y-0.5">
                                         <Label>Abrir em Nova Guia</Label>
-                                        <p className="text-xs text-slate-500">Ao invés de carregar no Portal (Iframe)</p>
+                                        <p className="text-xs text-slate-500">Ao invés de carregar no Portal (Iframe) ou rotas Next.</p>
                                     </div>
                                     <Switch
                                         checked={newLinkOpenInNewTab}
@@ -363,6 +399,7 @@ export default function AdminGroupsPage() {
                                         setEditingLinkId(link.id);
                                         setNewLinkName(link.name);
                                         setNewLinkUrl(link.url);
+                                        setNewLinkType(link.type || "INTEGRATED");
                                         setNewLinkOpenInNewTab(link.openInNewTab);
                                         setLinkDialogOpen(true);
                                     }}>
@@ -371,7 +408,10 @@ export default function AdminGroupsPage() {
                                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => handleDeleteLink(link.id, link.name)}>
                                         <Trash2 className="w-3 h-3" />
                                     </Button>
-                                    {link.openInNewTab && <span className="text-[10px] bg-slate-800 text-slate-400 px-1 hover:text-white rounded w-fit ml-2 uppercase" title="Abre em nova guia">Ext</span>}
+                                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wider ml-1 ${link.type === 'LOCAL' ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'}`}>
+                                        {link.type === 'LOCAL' ? 'App Local' : 'Externo'}
+                                    </span>
+                                    {link.openInNewTab && <span className="text-[10px] bg-slate-800 text-slate-400 px-1 hover:text-white rounded w-fit ml-1 uppercase" title="Abre em nova guia">Ext</span>}
                                     <Link2 className="w-4 h-4 text-slate-500 ml-1" />
                                 </div>
                             </div>
