@@ -17,16 +17,16 @@ export async function GET() {
 // POST: Criar novo Link
 export async function POST(req: Request) {
     try {
-        const { name, url, openInNewTab } = await req.json();
+        const { name, url, type, openInNewTab } = await req.json();
 
         if (!name || !url) {
             return NextResponse.json({ error: "Name and URL are required." }, { status: 400 });
         }
 
-        const formattedUrl = url.startsWith("http") ? url : `http://${url}`;
+        const formattedUrl = url.startsWith("http") || url.startsWith("/") ? url : `http://${url}`;
 
         const newLink = await prisma.link.create({
-            data: { name, url: formattedUrl, openInNewTab: Boolean(openInNewTab) },
+            data: { name, url: formattedUrl, type: type || "INTEGRATED", openInNewTab: Boolean(openInNewTab) },
         });
 
         return NextResponse.json(newLink);

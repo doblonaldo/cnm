@@ -5,18 +5,18 @@ import { prisma } from "@/lib/db";
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const { name, url, openInNewTab } = await req.json();
+        const { name, url, type, openInNewTab } = await req.json();
 
         if (!id || !name || !url) {
             return NextResponse.json({ error: "All fields are required." }, { status: 400 });
         }
 
         // Forçar protocolo se não tiver
-        const formattedUrl = url.startsWith("http") ? url : `http://${url}`;
+        const formattedUrl = url.startsWith("http") || url.startsWith("/") ? url : `http://${url}`;
 
         const updatedLink = await prisma.link.update({
             where: { id },
-            data: { name, url: formattedUrl, openInNewTab: Boolean(openInNewTab) },
+            data: { name, url: formattedUrl, type: type || "INTEGRATED", openInNewTab: Boolean(openInNewTab) },
         });
 
         return NextResponse.json(updatedLink);

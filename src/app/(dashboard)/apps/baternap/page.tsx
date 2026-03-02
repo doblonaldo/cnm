@@ -116,15 +116,15 @@ export default function BaterNapPage() {
     };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="p-6 h-full flex flex-col space-y-6 overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Bater Nap</h1>
                     <p className="text-muted-foreground">Consulte sinais e status de clientes FTTH/ZTE em tempo real.</p>
                 </div>
             </div>
 
-            <Alert variant="default" className="bg-blue-950/20 border-blue-900/50">
+            <Alert variant="default" className="bg-blue-950/20 border-blue-900/50 shrink-0">
                 <AlertCircle className="h-4 w-4 text-blue-500" />
                 <AlertTitle className="text-blue-400">Fluxo de Trabalho Recomendado</AlertTitle>
                 <AlertDescription className="text-blue-200/70 text-sm mt-2">
@@ -137,7 +137,7 @@ export default function BaterNapPage() {
                 </AlertDescription>
             </Alert>
 
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-slate-900 border-slate-800 shrink-0">
                 <CardHeader>
                     <CardTitle className="text-lg">Parâmetros de Consulta</CardTitle>
                     <CardDescription>Selecione a PON que deseja investigar.</CardDescription>
@@ -147,12 +147,12 @@ export default function BaterNapPage() {
                         <div className="space-y-2 w-48">
                             <label className="text-sm font-medium text-slate-300">OLT</label>
                             <Select value={olt} onValueChange={setOlt} disabled={consultado || loading}>
-                                <SelectTrigger className="bg-slate-950 border-slate-800">
+                                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200">
                                     <SelectValue placeholder="Selecione..." />
                                 </SelectTrigger>
-                                <SelectContent className="bg-slate-900 border-slate-800">
+                                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
                                     {OLTS.map(o => (
-                                        <SelectItem key={o} value={o}>{o}</SelectItem>
+                                        <SelectItem key={o} value={o} className="focus:bg-slate-800 focus:text-white">{o}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -161,12 +161,12 @@ export default function BaterNapPage() {
                         <div className="space-y-2 w-32">
                             <label className="text-sm font-medium text-slate-300">Slot</label>
                             <Select value={slot} onValueChange={setSlot} disabled={consultado || loading}>
-                                <SelectTrigger className="bg-slate-950 border-slate-800">
+                                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200">
                                     <SelectValue placeholder="Nº" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-slate-900 border-slate-800">
+                                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
                                     {SLOTS.map(s => (
-                                        <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+                                        <SelectItem key={s} value={String(s)} className="focus:bg-slate-800 focus:text-white">{s}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -175,12 +175,12 @@ export default function BaterNapPage() {
                         <div className="space-y-2 w-32">
                             <label className="text-sm font-medium text-slate-300">Porta</label>
                             <Select value={porta} onValueChange={setPorta} disabled={consultado || loading}>
-                                <SelectTrigger className="bg-slate-950 border-slate-800">
+                                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200">
                                     <SelectValue placeholder="Nº" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-slate-900 border-slate-800">
+                                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
                                     {PORTAS.map(p => (
-                                        <SelectItem key={p} value={String(p)}>{p}</SelectItem>
+                                        <SelectItem key={p} value={String(p)} className="focus:bg-slate-800 focus:text-white">{p}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -215,9 +215,9 @@ export default function BaterNapPage() {
             </Card>
 
             {(dadosOriginais.length > 0 || loading) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 flex-1 min-h-[400px]">
                     {/* Tabela Original */}
-                    <Card className="bg-slate-900 border-slate-800 flex flex-col h-[600px]">
+                    <Card className="bg-slate-900 border-slate-800 flex flex-col h-full">
                         <CardHeader className="py-4 border-b border-slate-800">
                             <CardTitle className="text-lg flex justify-between items-center">
                                 <span>Dados Originais</span>
@@ -248,7 +248,7 @@ export default function BaterNapPage() {
                                         filtrarDados(dadosOriginais).map((item) => (
                                             <TableRow key={item.id} className="border-slate-800/50 hover:bg-slate-800/50">
                                                 <TableCell className="font-medium text-slate-400">{item.id}</TableCell>
-                                                <TableCell className="truncate max-w-[150px]" title={item.nome}>
+                                                <TableCell className="truncate max-w-[250px] text-slate-200" title={item.nome}>
                                                     {item.nome}
                                                     {item.status && item.status !== "Working" && item.status !== "Offline" && (
                                                         <span className="ml-2 text-[10px] bg-red-900/30 text-red-400 px-1 py-0.5 rounded border border-red-900/50">
@@ -269,7 +269,7 @@ export default function BaterNapPage() {
                     </Card>
 
                     {/* Tabela Atualizada */}
-                    <Card className="bg-slate-900 border-slate-800 flex flex-col h-[600px]">
+                    <Card className="bg-slate-900 border-slate-800 flex flex-col h-full">
                         <CardHeader className="py-4 border-b border-slate-800 bg-slate-950/20">
                             <CardTitle className="text-lg flex justify-between items-center text-blue-400">
                                 <span>Dados Atualizados</span>
@@ -306,7 +306,7 @@ export default function BaterNapPage() {
                                         filtrarDados(dadosAtualizados).map((item) => (
                                             <TableRow key={item.id} className="border-slate-800/50 hover:bg-slate-800/50">
                                                 <TableCell className="font-medium text-slate-400">{item.id}</TableCell>
-                                                <TableCell className="truncate max-w-[150px]" title={item.nome}>
+                                                <TableCell className="truncate max-w-[250px] text-slate-200" title={item.nome}>
                                                     {item.nome}
                                                     {item.status && item.status !== "Working" && item.status !== "Offline" && (
                                                         <span className="ml-2 text-[10px] bg-red-900/30 text-red-400 px-1 py-0.5 rounded border border-red-900/50">

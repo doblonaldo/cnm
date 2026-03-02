@@ -110,10 +110,16 @@ export default function AdminGroupsPage() {
         const method = editingLinkId ? "PUT" : "POST";
 
         try {
+            // Auto generate URL for LOCAL apps if not provided
+            let finalUrl = newLinkUrl;
+            if (newLinkType === "LOCAL") {
+                finalUrl = `/apps/${newLinkName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")}`;
+            }
+
             const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: newLinkName, url: newLinkUrl, type: newLinkType, openInNewTab: newLinkOpenInNewTab }),
+                body: JSON.stringify({ name: newLinkName, url: finalUrl, type: newLinkType, openInNewTab: newLinkOpenInNewTab }),
             });
 
             if (!res.ok) {
@@ -325,19 +331,8 @@ export default function AdminGroupsPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>URL de Destino</Label>
-                                    <Input
-                                        type="url"
-                                        required
-                                        value={newLinkUrl}
-                                        onChange={(e) => setNewLinkUrl(e.target.value)}
-                                        className="bg-slate-950 border-slate-800 text-blue-400"
-                                        placeholder="https://..."
-                                    />
-                                </div>
-                                <div className="space-y-2">
                                     <Label>Tipo de Aplicação</Label>
-                                    <div className="flex gap-4 mt-2">
+                                    <div className="flex gap-4 mt-2 mb-4">
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input
                                                 type="radio"
@@ -346,7 +341,6 @@ export default function AdminGroupsPage() {
                                                 checked={newLinkType === "INTEGRATED"}
                                                 onChange={() => {
                                                     setNewLinkType("INTEGRATED");
-                                                    // Se for integrado, força nova aba por padrão (geralmente)
                                                     setNewLinkOpenInNewTab(true);
                                                 }}
                                                 className="accent-purple-600"
@@ -361,7 +355,6 @@ export default function AdminGroupsPage() {
                                                 checked={newLinkType === "LOCAL"}
                                                 onChange={() => {
                                                     setNewLinkType("LOCAL");
-                                                    // Se for local (App Next), abrir na mesma guia
                                                     setNewLinkOpenInNewTab(false);
                                                 }}
                                                 className="accent-purple-600"
@@ -370,6 +363,19 @@ export default function AdminGroupsPage() {
                                         </label>
                                     </div>
                                 </div>
+                                {newLinkType === "INTEGRATED" && (
+                                    <div className="space-y-2">
+                                        <Label>URL de Destino</Label>
+                                        <Input
+                                            type="url"
+                                            required={newLinkType === "INTEGRATED"}
+                                            value={newLinkUrl}
+                                            onChange={(e) => setNewLinkUrl(e.target.value)}
+                                            className="bg-slate-950 border-slate-800 text-blue-400"
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                )}
                                 <div className="flex items-center justify-between border border-slate-800 p-3 rounded-lg bg-slate-950/50">
                                     <div className="space-y-0.5">
                                         <Label>Abrir em Nova Guia</Label>
@@ -415,7 +421,7 @@ export default function AdminGroupsPage() {
                                     <Link2 className="w-4 h-4 text-slate-500 ml-1" />
                                 </div>
                             </div>
-                            <p className="text-xs text-slate-400 truncate w-full" title={link.url}>{link.url}</p>
+                            {link.type !== 'LOCAL' && <p className="text-xs text-slate-400 truncate w-full mt-1" title={link.url}>{link.url}</p>}
                         </div>
                     ))}
                 </div>
@@ -453,7 +459,7 @@ export default function AdminGroupsPage() {
                                                 className="data-[state=checked]:bg-emerald-500 shrink-0"
                                             />
                                         </div>
-                                        <p className="text-xs text-slate-400 truncate w-full" title={link.url}>{link.url}</p>
+                                        {link.type !== 'LOCAL' && <p className="text-xs text-slate-400 truncate w-full" title={link.url}>{link.url}</p>}
                                     </div>
                                 )
                             })
