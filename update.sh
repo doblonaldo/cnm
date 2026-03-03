@@ -18,6 +18,8 @@ fi
 
 # 1. Update Packages
 echo ">> [1/4] Instalando novos módulos (se houver)..."
+# Garante as permissoes da pasta antes de qualquer acao em caso de git pulls como root
+chown -R $APP_USER:$APP_USER .
 sudo -u $APP_USER npm install
 
 # 2. Safe Database Migration (Aplica as novas colunas sem apagar a tabela)

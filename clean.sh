@@ -11,6 +11,7 @@ echo " - Dependências e caches (.next, node_modules)"
 echo " - Arquivo de configuração de chaves (.env)"
 echo " - Banco de Dados PostgreSQL (cnm) e Usuário"
 echo " - Arquivos globais de Log (/var/log/cnm)"
+echo " - Regras persistentes de Firewall e Proxy (Apache/Iptables)"
 echo "================================================="
 
 # Confirmação
@@ -53,6 +54,23 @@ rm -rf /var/log/cnm
 rm -f /etc/logrotate.d/cnm
 rm -f /etc/cron.weekly/cnm-db-prune
 echo "[OK] Logs globais deletados."
+
+echo ">> 5. Removendo regras de Firewall e Apache Proxy..."
+if command -v iptables >/dev/null 2>&1; then
+    iptables -F
+    iptables -X
+    if command -v netfilter-persistent >/dev/null 2>&1; then
+        netfilter-persistent save >/dev/null 2>&1 || true
+    elif command -v iptables-save >/dev/null 2>&1; then
+        iptables-save > /etc/sysconfig/iptables 2>/dev/null || true
+    fi
+fi
+if command -v apache2 >/dev/null 2>&1; then
+    a2dissite cnm.conf >/dev/null 2>&1 || true
+    rm -f /etc/apache2/sites-available/cnm.conf
+    systemctl restart apache2 >/dev/null 2>&1 || true
+fi
+echo "[OK] Firewall liberado e Proxy removido."
 
 echo ""
 echo "================================================="
