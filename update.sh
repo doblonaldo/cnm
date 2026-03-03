@@ -15,11 +15,15 @@ echo ">> [1/3] Instalando novos módulos (se houver)..."
 npm install
 
 # 2. Safe Database Migration (Aplica as novas colunas sem apagar a tabela)
-echo ">> [2/3] Atualizando estrutura do Banco de Dados..."
+echo ">> [2/4] Atualizando estrutura do Banco de Dados..."
 npx prisma migrate deploy
 
-# 3. Build Production
-echo ">> [3/3] Compilando nova versão..."
+# 3. Seeding Specific Addons (Injetar as atualizações da UI Local)
+echo ">> [3/4] Injetando Baternap e recursos locais no Banco..."
+node scripts/seed-baternap.js
+
+# 4. Build Production
+echo ">> [4/4] Compilando nova versão..."
 npm run build
 
 echo ""
