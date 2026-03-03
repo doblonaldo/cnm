@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Central Network Manager (CNM)
 
-## Getting Started
+O **Central Network Manager (CNM)** é uma plataforma centralizada para auxiliar o monitoramento, provisionamento de rede, e centralizar utilitários em um painel administrativo moderno e unificado. Projetado usando Next.js, Prisma e TailwindCSS.
 
-First, run the development server:
+## Requisitos do Sistema
+
+- **Sistema Operacional**: Linux (Ubuntu, Debian, RHEL, CentOS, Fedora, Arch)
+- **Acesso Root** (Sudo privileges)
+- **Recursos Mínimos**: Conexão com a Internet para baixar pacotes Node/PostgreSQL.
+
+---
+
+## 🚀 Instalação e Implantação Automática
+
+A plataforma CNM foi projetada para ser autossuficiente e vem com um instalador que configura tudo para você, desde a instalação do NodeJS e PostgreSQL, a configuração de banco de dados, geração de segredos (JWT, Senhas), e inicialização dos servidores Node via **PM2**.
+
+### Opção 1: Via Script Interativo (Recomendado)
+
+Na raiz do projeto (como usuário root ou via sudo), execute:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+chmod +x setup.sh
+sudo ./setup.sh
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Siga os passos na tela**:
+1. Escolha entre **Modo Interativo** (Para gerar senhas manualmente) ou **Auto Instalador (Produção)**.
+2. Forneça os IPs, Usuários e Senhas de Sistemas como OLT ZTE e Banco UNM2000 (Opcional, preencha para integrar aplicativos terceiros como o Baternap).
+3. A instalação fará a configuração do Banco de Dados PostgreSQL, populará os seeds exigidos, registrará logs e configurará cronjobs.
+4. Para quem escolheu a **Produção Automática (2)**, ele instalará e iniciará a interface gráfica de forma automatizada via `pm2`, configurando para que funcione mesmo se a máquina reiniciar.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ⚙️ Integrando o Google SSO Corporativo (Opcional)
 
-## Learn More
+Durante o `setup.sh` (No Modo Interativo), você poderá inserir suas credenciais do **Google Cloud Console**:
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_WORKSPACE_DOMAIN` (Exemplo: @suaempresa.com.br)
 
-To learn more about Next.js, take a look at the following resources:
+Apenas usuários com emails desta empresa conseguirão solicitar acesso instantâneo ao Painel!
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔄 Manutenção e Atualização
 
-## Deploy on Vercel
+### Atualizações de Repositório
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Caso puxe código novo do Git, e queira atualizar o banco de dados sem deletar os dados existentes, execute:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+chmod +x update.sh
+sudo ./update.sh
+```
+
+Esse script vai:
+1. Sincronizar as novas dependências `npm install`.
+2. Executar `prisma migrate deploy` rodando as migrações com segurança.
+3. Semear ferramentas locais.
+4. Rodar o novo build do next e recomendar a atualização contínua do PM2.
+
+### Limpeza Completa / Reset de Fábrica
+
+Se desejar remover inteiramente todos os bancos de dados criados (Apagar tudo!), rodar cronjobs off e sumir com os logs do ambiente CNM original para reinstalar do zero, execute:
+
+```bash
+chmod +x clean.sh
+sudo ./clean.sh
+```
+
+---
+
+## Funcionalidades Core Construídas
+
+- Controle de Acesso Baseado em Grupos e Permissões (Atalhos, Web Apps Locais, Aplicações Ext).
+- Aplicativo Baternap Embutido (Monitoramento OLT via BD UNM2000 FiberHome e ZTE).
+- Retenção de Logs (Login e Falhas), configurado para ser rotacionado (SystemD logrotate e Limpeza do Banco via /api/admin/system/prune-logs).
+- Sistema de Convites Seguro e Links Customizáveis.
+
+*Projeto Desenvolvido visando Infraestruturas Modernas em Provedores de Telecom/ISP.*

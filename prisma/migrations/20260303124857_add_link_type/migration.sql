@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Link" ADD COLUMN     "type" TEXT NOT NULL DEFAULT 'INTEGRATED';

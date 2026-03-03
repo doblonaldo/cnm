@@ -33,6 +33,13 @@ export async function GET(req: Request) {
             );
             return NextResponse.json(resultado);
         } else if (oltEscolhida.vendor === "FTTH") {
+            if (!process.env.UNM2000_DB_HOST || !process.env.UNM2000_DB_USER || !process.env.UNM2000_DB_PASSWORD) {
+                return NextResponse.json(
+                    { error: "Credenciais do banco de dados FiberHome (UNM2000) não configuradas no servidor (.env)." },
+                    { status: 500 }
+                );
+            }
+
             const indices = Array.from({ length: 128 }, (_, i) => i + 1);
 
             // Execute parallel requests drastically improving FTTH SNMP response time

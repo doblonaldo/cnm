@@ -27,8 +27,9 @@ export default function InvitePage() {
             return;
         }
 
-        if (password.length < 8) {
-            toast.error("Sua senha deve ter no mínimo 8 caracteres");
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{12,}$/;
+        if (!passwordRegex.test(password)) {
+            toast.error("A senha deve ter no mínimo 12 caracteres, incluindo uma letra maiúscula e um símbolo.");
             return;
         }
 
@@ -98,6 +99,8 @@ export default function InvitePage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                minLength={12}
+                                placeholder="Mín. 12 caracteres, 1 maiúscula, 1 símbolo"
                                 className="bg-slate-950 border-slate-800 focus-visible:ring-blue-500"
                             />
                         </div>
@@ -109,6 +112,8 @@ export default function InvitePage() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
+                                minLength={12}
+                                placeholder="Repita sua senha"
                                 className="bg-slate-950 border-slate-800 focus-visible:ring-blue-500"
                             />
                         </div>

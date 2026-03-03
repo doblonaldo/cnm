@@ -20,8 +20,15 @@ export async function PUT(req: Request) {
 
         const { currentPassword, newPassword } = await req.json();
 
-        if (!currentPassword || !newPassword || newPassword.length < 8) {
-            return NextResponse.json({ error: "A nova senha deve ter no mínimo 8 caracteres." }, { status: 400 });
+        if (!currentPassword || !newPassword) {
+            return NextResponse.json({ error: "Preencha a senha atual e a nova senha." }, { status: 400 });
+        }
+
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{12,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return NextResponse.json({
+                error: "A nova senha deve ter no mínimo 12 caracteres, incluindo uma letra maiúscula e um símbolo."
+            }, { status: 400 });
         }
 
         const user = await prisma.user.findUnique({

@@ -27,6 +27,7 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
     const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [changingPassword, setChangingPassword] = useState(false);
 
     useEffect(() => {
@@ -35,6 +36,18 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (newPassword !== confirmNewPassword) {
+            toast.error("As novas senhas não conferem.");
+            return;
+        }
+
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{12,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            toast.error("A nova senha deve ter no mínimo 12 caracteres, incluindo uma letra maiúscula e um símbolo.");
+            return;
+        }
+
         setChangingPassword(true);
         try {
             const res = await fetch("/api/auth/me/password", {
@@ -54,6 +67,7 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
             setPasswordModalOpen(false);
             setCurrentPassword("");
             setNewPassword("");
+            setConfirmNewPassword("");
         } catch (error) {
             toast.error("Ocorreu um erro interno. Tente novamente.");
         } finally {
@@ -120,13 +134,13 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
 
                         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'atalhos' ? 'max-h-[1000px] mt-2' : 'max-h-0'}`}>
                             <nav className="space-y-1">
-                                {access.links.filter(l => l.type !== "LOCAL").length === 0 ? (
+                                {access.links.filter(l => l.type !== "LOCAL" && l.type !== "NEXTJS").length === 0 ? (
                                     <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
                                         <AlertCircle className="w-4 h-4" />
                                         {!collapsed && "Nenhum atalho ativo"}
                                     </div>
                                 ) : (
-                                    access.links.filter(l => l.type !== "LOCAL").map((link) => {
+                                    access.links.filter(l => l.type !== "LOCAL" && l.type !== "NEXTJS").map((link) => {
                                         const href = link.openInNewTab ? link.url : `/portal/${link.id}`;
                                         const isActive = !link.openInNewTab && pathname.startsWith(`/portal/${link.id}`);
                                         return (
@@ -174,13 +188,13 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
 
                         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'aplicacoes' ? 'max-h-[1000px] mt-2' : 'max-h-0'}`}>
                             <nav className="space-y-1">
-                                {access.links.filter(l => l.type === "LOCAL").length === 0 ? (
+                                {access.links.filter(l => l.type === "LOCAL" || l.type === "NEXTJS").length === 0 ? (
                                     <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
                                         <AlertCircle className="w-4 h-4" />
                                         {!collapsed && "Nenhuma aplicação instalada"}
                                     </div>
                                 ) : (
-                                    access.links.filter(l => l.type === "LOCAL").map((link) => {
+                                    access.links.filter(l => l.type === "LOCAL" || l.type === "NEXTJS").map((link) => {
                                         const href = link.openInNewTab ? link.url : link.url;
                                         const isActive = pathname.startsWith(link.url);
                                         return (
@@ -279,10 +293,24 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
                                         id="new-password"
                                         type="password"
                                         required
-                                        minLength={8}
+                                        minLength={12}
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
                                         className="bg-slate-950 border-slate-800 text-white"
+                                        placeholder="Mínimo 12 caracteres, 1 maiúscula, 1 símbolo"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirm-new-password">Confirmar Nova Senha</Label>
+                                    <Input
+                                        id="confirm-new-password"
+                                        type="password"
+                                        required
+                                        minLength={12}
+                                        value={confirmNewPassword}
+                                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                        className="bg-slate-950 border-slate-800 text-white"
+                                        placeholder="Repita a nova senha"
                                     />
                                 </div>
                             </div>

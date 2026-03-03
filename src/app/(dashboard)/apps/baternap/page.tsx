@@ -37,16 +37,17 @@ export default function BaterNapPage() {
 
     const [removerComSinal, setRemoverComSinal] = useState(false);
 
-    const formatarSinalClass = (sinal: number, status: string) => {
+    const formatarSinalClass = (sinalRaw: number | string, status: string) => {
+        const sinal = Number(sinalRaw);
+
         if (sinal === 0 || status === "Loss" || status === "Offline" || status === "DyingGasp") {
             return "text-red-500 font-bold";
         }
         if (sinal >= -1) return "text-red-500 font-bold";
-        if (sinal > -14) return "text-orange-500 font-semibold";
-        if (sinal > -24) return "text-green-500 font-bold";
-        if (sinal < -24 && sinal > -30) return "text-yellow-500 font-semibold";
-        if (sinal <= -30) return "text-red-500 font-bold";
-        return "text-slate-200";
+        if (sinal >= -14) return "text-orange-500 font-semibold";
+        if (sinal >= -24) return "text-green-500 font-bold";
+        if (sinal >= -30) return "text-yellow-500 font-semibold";
+        return "text-red-500 font-bold";
     };
 
     const handleConsultar = async () => {
@@ -112,7 +113,10 @@ export default function BaterNapPage() {
 
     const filtrarDados = (dados: ClienteDados[]) => {
         if (!removerComSinal) return dados;
-        return dados.filter(item => item.sinal < -40 || item.sinal === 0 || item.status !== "Working");
+        return dados.filter(item => {
+            const sinal = Number(item.sinal);
+            return sinal < -40 || sinal === 0 || item.status !== "Working";
+        });
     };
 
     return (
@@ -241,7 +245,7 @@ export default function BaterNapPage() {
                                         <TableRow>
                                             <TableCell colSpan={4} className="h-48 text-center text-slate-500">
                                                 <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500/50" />
-                                                Buscando dados via SNMP/MySQL...
+                                                Realizando busca...
                                             </TableCell>
                                         </TableRow>
                                     ) : (
