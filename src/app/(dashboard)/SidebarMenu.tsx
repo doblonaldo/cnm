@@ -113,7 +113,7 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
             <div className="flex-1 overflow-hidden flex flex-col py-4 px-3 gap-6">
 
                 {/* Accordion Container */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+                <div className="flex-1 overflow-y-auto flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
                     {/* Accordion 1 - Atalhos de Links */}
                     <div className="flex flex-col">
@@ -132,11 +132,11 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
                             )}
                         </button>
 
-                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'atalhos' ? 'max-h-[1000px] mt-2' : 'max-h-0'}`}>
-                            <nav className="space-y-1">
+                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'atalhos' ? 'max-h-[32vh] mt-2 overflow-y-auto custom-scrollbar' : 'max-h-0'}`}>
+                            <nav className="space-y-1 pr-1">
                                 {access.links.filter(l => l.type !== "LOCAL" && l.type !== "NEXTJS").length === 0 ? (
                                     <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
-                                        <AlertCircle className="w-4 h-4" />
+                                        <AlertCircle className="w-4 h-4 shrink-0" />
                                         {!collapsed && "Nenhum atalho ativo"}
                                     </div>
                                 ) : (
@@ -186,11 +186,11 @@ export default function SidebarMenu({ access, email }: { access: AccessProps, em
                             )}
                         </button>
 
-                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'aplicacoes' ? 'max-h-[1000px] mt-2' : 'max-h-0'}`}>
-                            <nav className="space-y-1">
+                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'aplicacoes' ? 'max-h-[32vh] mt-2 overflow-y-auto custom-scrollbar' : 'max-h-0'}`}>
+                            <nav className="space-y-1 pr-1">
                                 {access.links.filter(l => l.type === "LOCAL" || l.type === "NEXTJS").length === 0 ? (
                                     <div className={`text-slate-500 text-sm px-3 flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
-                                        <AlertCircle className="w-4 h-4" />
+                                        <AlertCircle className="w-4 h-4 shrink-0" />
                                         {!collapsed && "Nenhuma aplicação instalada"}
                                     </div>
                                 ) : (

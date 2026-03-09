@@ -429,21 +429,31 @@ export default function AdminGroupsPage() {
 
             {/* MODAL DE PERMISSÕES DO GRUPO */}
             <Dialog open={permissionsDialogOpen} onOpenChange={setPermissionsDialogOpen}>
-                <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-2xl">
+                <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-[90vw] md:max-w-4xl lg:max-w-5xl xl:max-w-7xl">
                     <DialogHeader className="mb-4">
                         <DialogTitle className="text-xl">
                             Gerenciar acessos do Grupo: <span className="text-blue-400">{selectedGroup?.name}</span>
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                         {links.length === 0 ? (
                             <p className="text-slate-500 py-4 col-span-full">Não há links cadastrados no sistema.</p>
                         ) : (
                             links.map(link => {
                                 const isChecked = groupLinks.includes(link.id);
                                 return (
-                                    <div key={link.id} className={`flex flex-col p-4 rounded-xl border transition-colors ${isChecked ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800 bg-slate-900'}`}>
-                                        <div className="flex items-center mb-3 gap-2">
+                                    <div 
+                                        key={link.id} 
+                                        onClick={(e) => {
+                                            // Prevents double fire if clicking the Switch directly
+                                            if ((e.target as HTMLElement).closest('button[role="switch"]')) return;
+                                            
+                                            if (isChecked) setGroupLinks(groupLinks.filter(id => id !== link.id));
+                                            else setGroupLinks([...groupLinks, link.id]);
+                                        }}
+                                        className={`flex flex-col p-4 rounded-xl border transition-colors cursor-pointer ${isChecked ? 'border-emerald-500/50 bg-emerald-500/5 hover:bg-emerald-500/10' : 'border-slate-800 bg-slate-900 hover:bg-slate-800/80 hover:border-slate-700'}`}
+                                    >
+                                        <div className="flex items-center mb-3 gap-2 pointer-events-none">
                                             <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${isChecked ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
                                                 <Link2 className="w-4 h-4" />
                                             </div>
@@ -456,7 +466,7 @@ export default function AdminGroupsPage() {
                                                     if (checked) setGroupLinks([...groupLinks, link.id]);
                                                     else setGroupLinks(groupLinks.filter(id => id !== link.id));
                                                 }}
-                                                className="data-[state=checked]:bg-emerald-500 shrink-0"
+                                                className="data-[state=checked]:bg-emerald-500 shrink-0 pointer-events-auto"
                                             />
                                         </div>
                                         {link.type !== 'LOCAL' && <p className="text-xs text-slate-400 truncate w-full" title={link.url}>{link.url}</p>}
