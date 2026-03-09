@@ -99,7 +99,7 @@ export default function AdminUsersPage() {
     }
 
     return (
-        <div className="p-8 space-y-6 bg-slate-950 min-h-full">
+        <div className="p-8 space-y-6 bg-slate-950 h-full overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-white tracking-tight">Usuários</h1>

@@ -188,7 +188,7 @@ export default function AdminGroupsPage() {
     }
 
     return (
-        <div className="p-8 space-y-8 bg-slate-950 min-h-full">
+        <div className="p-8 space-y-8 bg-slate-950 h-full overflow-y-auto custom-scrollbar">
 
             {/* SEÇÃO GRUPOS */}
             <div>
