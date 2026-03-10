@@ -138,7 +138,8 @@ cd "$TARGET_DIR" || exit 1
 echo ">> [3/7] Instalando novos módulos (se houver) em '$TARGET_DIR'..."
 # Garante as permissoes da pasta antes de qualquer acao
 chown -R $APP_USER:$APP_USER "$TARGET_DIR"
-sudo -u $APP_USER npm install
+# Force npm install to get dependencies like recharts even if cache is stale
+sudo -u $APP_USER npm install --legacy-peer-deps
 
 # 4. Safe Database Migration (Aplica as novas colunas sem apagar a tabela)
 echo ">> [4/7] Atualizando estrutura do Banco de Dados..."
@@ -169,14 +170,14 @@ echo "A nova versão já está compilada."
 
 if command -v pm2 &> /dev/null; then
     # Checar se o app já está rodando no PM2
-    if su - "$APP_USER" -c "pm2 list" 2>/dev/null | grep -q "cnm"; then
+    if sudo -u "$APP_USER" pm2 list 2>/dev/null | grep -q "cnm"; then
         echo ">> Recarregando a aplicação no PM2 (Zero-Downtime se suportado)..."
-        su - "$APP_USER" -c "pm2 reload cnm || pm2 restart cnm"
+        sudo -u "$APP_USER" pm2 reload cnm || sudo -u "$APP_USER" pm2 restart cnm
     else
         echo ">> Adicionando a aplicação CNM ao PM2..."
-        # O start é direto via npm
-        su - "$APP_USER" -c "cd $(pwd) && pm2 start npm --name 'cnm' -- start"
-        su - "$APP_USER" -c "pm2 save"
+        # Iniciar no PM2 a partir do TARGET_DIR processando npm como start
+        sudo -u "$APP_USER" pm2 start npm --name "cnm" -- start
+        sudo -u "$APP_USER" pm2 save
     fi
 else
     echo ">> [INFO] PM2 não detectado no sistema."
