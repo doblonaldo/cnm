@@ -50,7 +50,12 @@ export async function POST(req: Request) {
 
         const smtpHost = settings?.smtpHost || process.env.SMTP_HOST;
         const smtpPort = settings?.smtpPort || Number(process.env.SMTP_PORT) || 587;
-        const smtpSecure = settings?.smtpHost ? settings.smtpSecure : (process.env.SMTP_SECURE === "true" || smtpPort === 465);
+        
+        let smtpSecure = settings?.smtpHost ? settings.smtpSecure : (process.env.SMTP_SECURE === "true");
+        // FIX NODEMAILER ETIMEDOUT: Port 587 must use Explicit TLS (secure: false) / Port 465 must use Implicit TLS (secure: true)
+        if (smtpPort === 587) smtpSecure = false;
+        if (smtpPort === 465) smtpSecure = true;
+
         const smtpUser = settings?.smtpUser || process.env.SMTP_USER;
         const smtpPass = settings?.smtpPass || process.env.SMTP_PASS;
         const smtpFrom = settings?.smtpFrom || process.env.SMTP_FROM || `"CNM Admin" <${smtpUser}>`;
