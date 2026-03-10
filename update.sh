@@ -24,27 +24,48 @@ else
     APP_USER=$SUDO_USER
 fi
 
-# 0. Verificação de Dependências (rsync)
-if ! command -v rsync >/dev/null 2>&1; then
-    echo ">> [0/6] 'rsync' não encontrado. Detectando Sistema para instalação..."
+# 0. Verificação de Dependências
+PACKAGES_TO_CHECK=("rsync" "node" "npm")
+PACKAGES_TO_INSTALL=()
+
+for pkg in "${PACKAGES_TO_CHECK[@]}"; do
+    if ! command -v "$pkg" >/dev/null 2>&1; then
+        PACKAGES_TO_INSTALL+=("$pkg")
+    fi
+done
+
+if [ ${#PACKAGES_TO_INSTALL[@]} -gt 0 ]; then
+    echo ">> [0/7] Dependências ausentes detectadas: ${PACKAGES_TO_INSTALL[*]}. Instalando..."
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         OS=$ID
         OS_LIKE=${ID_LIKE:-""}
         
+        # Converte dependências de comando para nomes de pacotes de sistema
+        SYS_PACKAGES=""
+        for pkg in "${PACKAGES_TO_INSTALL[@]}"; do
+            if [ "$pkg" == "node" ] || [ "$pkg" == "npm" ]; then
+                SYS_PACKAGES="$SYS_PACKAGES nodejs npm"
+            else
+                SYS_PACKAGES="$SYS_PACKAGES $pkg"
+            fi
+        done
+        # Garantir que não haja duplicatas
+        SYS_PACKAGES=$(echo "$SYS_PACKAGES" | xargs -n1 | sort -u | xargs)
+        
         if [[ "$OS" == "ubuntu" || "$OS" == "debian" || "$OS_LIKE" == *"ubuntu"* || "$OS_LIKE" == *"debian"* ]]; then
-            apt-get update -y && apt-get install -y rsync
+            apt-get update -y && apt-get install -y $SYS_PACKAGES
         elif [[ "$OS" == "arch" || "$OS" == "cachyos" || "$OS" == "manjaro" || "$OS_LIKE" == *"arch"* ]]; then
-            pacman -Sy --noconfirm rsync
+            pacman -Sy --noconfirm $SYS_PACKAGES
         elif [[ "$OS" == "centos" || "$OS" == "rhel" || "$OS" == "fedora" || "$OS" == "rocky" || "$OS" == "alma" || "$OS_LIKE" == *"rhel"* || "$OS_LIKE" == *"fedora"* ]]; then
             PKG_MAN=$(command -v dnf || command -v yum)
-            $PKG_MAN install -y rsync
+            $PKG_MAN install -y $SYS_PACKAGES
         else
-            echo ">> Sistema '$OS' não suportado para instalação automática do rsync. Por favor, instale manualmente."
+            echo ">> Sistema '$OS' não suportado para instalação automática. Por favor, instale manualmente: $SYS_PACKAGES"
             exit 1
         fi
     else
-        echo ">> SO não detectado. Instale o rsync manualmente (apt install rsync / pacman -S rsync)."
+        echo ">> SO não detectado. Instale as dependências manualmente: ${PACKAGES_TO_INSTALL[*]}"
         exit 1
     fi
 fi
@@ -127,15 +148,22 @@ echo "   ATUALIZAÇÃO CONCLUÍDA!                        "
 echo "================================================="
 echo "A nova versão já está compilada."
 
-if command -v pm2 &> /dev/null && pm2 list 2>/dev/null | grep -q "cnm"; then
-    echo ">> Recarregando a aplicação no PM2 (Zero-Downtime se suportado)..."
-    pm2 reload cnm || pm2 restart cnm
-elif [ -n "$SUDO_USER" ] && command -v pm2 &> /dev/null && su - "$SUDO_USER" -c "pm2 list" 2>/dev/null | grep -q "cnm"; then
-    echo ">> Recarregando a aplicação no PM2 (via $SUDO_USER)..."
-    su - "$SUDO_USER" -c "pm2 reload cnm || pm2 restart cnm"
+if command -v pm2 &> /dev/null; then
+    # Checar se o app já está rodando no PM2
+    if su - "$APP_USER" -c "pm2 list" 2>/dev/null | grep -q "cnm"; then
+        echo ">> Recarregando a aplicação no PM2 (Zero-Downtime se suportado)..."
+        su - "$APP_USER" -c "pm2 reload cnm || pm2 restart cnm"
+    else
+        echo ">> Adicionando a aplicação CNM ao PM2..."
+        # O start é direto via npm
+        su - "$APP_USER" -c "cd $(pwd) && pm2 start npm --name 'cnm' -- start"
+        su - "$APP_USER" -c "pm2 save"
+    fi
 else
+    echo ">> [INFO] PM2 não detectado no sistema."
+    echo "Sugestão: Instale o PM2 globalmente ('npm install -g pm2') para gerenciar o processo."
     echo "IMPORTANTE: Reinicie o processo Node/PM2/SystemD"
     echo "para que as alterações entrem no ar ativamente."
-    echo "Ex: Ctrl+C ou 'pm2 restart cnm'"
+    echo "Ex: Ctrl+C e 'npm run start' ou 'pm2 restart cnm'"
 fi
 echo "================================================="
