@@ -54,11 +54,12 @@ UPDATE_DIR=${1:-"./_update"}
 
 if [ -d "$UPDATE_DIR" ]; then
     # Capturar a versão atual via package.json do projeto
-    APP_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")
+    OLD_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")
+    APP_VERSION=$OLD_VERSION
     VERSION_DATE=$(date +"%d%m%Y_%H%M%S")
     BACKUP_DIR="_backups/V_${APP_VERSION}_${VERSION_DATE}"
     
-    echo ">> [1/6] Criando backup da versão atual (V ${APP_VERSION}) em '$BACKUP_DIR'..."
+    echo ">> [1/7] Criando backup da versão atual (V ${APP_VERSION}) em '$BACKUP_DIR'..."
     mkdir -p "$BACKUP_DIR"
     
     # Criamos um backup usando rsync excluindo caches pesados e arquivos temporários
@@ -72,7 +73,7 @@ if [ -d "$UPDATE_DIR" ]; then
     chown -R $APP_USER:$APP_USER "$BACKUP_DIR"
     echo ">> Backup salvo com sucesso: V ${APP_VERSION} (Data: $VERSION_DATE)"
 
-    echo ">> [2/6] Sincronizando arquivos novos de '$UPDATE_DIR'..."
+    echo ">> [2/7] Sincronizando arquivos novos de '$UPDATE_DIR'..."
     
     # Sincroniza arquivos, preservando .env e outras pastas vitais
     rsync -avz --checksum \
@@ -86,27 +87,38 @@ if [ -d "$UPDATE_DIR" ]; then
         "$UPDATE_DIR/" ./
         
     echo ">> Sincronização concluída."
+    NEW_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")
 else
-    echo ">> [1/6 & 2/6] Nenhum diretório de atualização ('$UPDATE_DIR'). Pulando geração de versão e sync."
+    echo ">> [1/7 & 2/7] Nenhum diretório de atualização ('$UPDATE_DIR'). Pulando geração de versão e sync."
+    OLD_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")
+    NEW_VERSION=$OLD_VERSION
 fi
 
 # 3. Update Packages
-echo ">> [3/6] Instalando novos módulos (se houver)..."
+echo ">> [3/7] Instalando novos módulos (se houver)..."
 # Garante as permissoes da pasta antes de qualquer acao em caso de git pulls como root
 chown -R $APP_USER:$APP_USER .
 sudo -u $APP_USER npm install
 
 # 4. Safe Database Migration (Aplica as novas colunas sem apagar a tabela)
-echo ">> [4/6] Atualizando estrutura do Banco de Dados..."
+echo ">> [4/7] Atualizando estrutura do Banco de Dados..."
 sudo -u $APP_USER npx prisma migrate deploy
 
 # 5. Seeding Specific Addons (Injetar as atualizações da UI Local)
-echo ">> [5/6] Injetando Baternap, Wanguard e recursos locais no Banco..."
+echo ">> [5/7] Injetando Baternap, Wanguard e recursos locais no Banco..."
 sudo -u $APP_USER node scripts/seed-baternap.js
 sudo -u $APP_USER node scripts/seed-wanguard.js
 
-# 6. Build Production
-echo ">> [6/6] Compilando nova versão..."
+# 6. Executar updates da Timeline
+echo ">> [6/7] Verificando e executando scripts de Timeline..."
+if [ -f "scripts/run-timeline-updates.js" ]; then
+    sudo -u $APP_USER node scripts/run-timeline-updates.js "$OLD_VERSION" "$NEW_VERSION"
+else
+    echo ">> Script run-timeline-updates.js não encontrado. Pulando."
+fi
+
+# 7. Build Production
+echo ">> [7/7] Compilando nova versão..."
 sudo -u $APP_USER npm run build
 
 echo ""
