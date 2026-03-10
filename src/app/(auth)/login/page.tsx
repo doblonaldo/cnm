@@ -130,7 +130,7 @@ function LoginForm() {
                 <Button
                     type="button"
                     variant="outline"
-                    className="w-full bg-white hover:bg-slate-100 text-slate-900 border-0 font-medium h-11"
+                    className="w-full bg-white hover:bg-slate-100 text-slate-800 border-0 font-medium h-11"
                     onClick={() => {
                         setLoading(true);
                         window.location.href = "/api/auth/google";
