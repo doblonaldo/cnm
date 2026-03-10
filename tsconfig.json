@@ -38,6 +38,9 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "_backups",
+    "_update",
+    "_legacy_import"
   ]
 }
