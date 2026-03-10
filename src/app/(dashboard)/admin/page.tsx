@@ -120,6 +120,21 @@ export default function AdminDashboard() {
                                 </Card>
                             </Link>
 
+                            {/* Módulo Wanguard */}
+                            <Link href="/admin/settings/wanguard">
+                                <Card className="bg-slate-900 border-slate-800 hover:border-green-500/50 hover:bg-slate-800/50 transition-colors cursor-pointer h-full">
+                                    <CardHeader>
+                                        <CardTitle className="text-white flex items-center gap-2 text-lg">
+                                            <ShieldCheck className="w-5 h-5 text-green-400" />
+                                            Integração Wanguard
+                                        </CardTitle>
+                                        <CardDescription className="text-slate-400 mt-2">
+                                            Configure a API do Wanguard para visualização de tráfego de Flow (AS) no seu painel.
+                                        </CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            </Link>
+
                         </div>
                     </div>
                 )}

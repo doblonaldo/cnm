@@ -78,5 +78,9 @@ model AppSetting {
   smtpSecure Boolean @default(true)
   smtpFrom  String?
   
+  wanguardHost  String?
+  wanguardUser  String?
+  wanguardPassword String?
+
   updatedAt DateTime @updatedAt
 }

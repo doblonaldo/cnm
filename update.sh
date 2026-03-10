@@ -101,8 +101,9 @@ echo ">> [4/6] Atualizando estrutura do Banco de Dados..."
 sudo -u $APP_USER npx prisma migrate deploy
 
 # 5. Seeding Specific Addons (Injetar as atualizações da UI Local)
-echo ">> [5/6] Injetando Baternap e recursos locais no Banco..."
+echo ">> [5/6] Injetando Baternap, Wanguard e recursos locais no Banco..."
 sudo -u $APP_USER node scripts/seed-baternap.js
+sudo -u $APP_USER node scripts/seed-wanguard.js
 
 # 6. Build Production
 echo ">> [6/6] Compilando nova versão..."
