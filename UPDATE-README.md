@@ -20,13 +20,24 @@ Isso permite que a aplicação atual em produção (`/srv/cnm`) só saia do ar n
 
 Vamos supor que lançaram a **Versão `0.3.0`** do CNM e o seu provedor/cliente está rodando a **Versão `0.1.0`** no `/srv/cnm`.
 
-### Passo A: Baixe e extraia a nova versão
-Usando um zip ou git, coloque o código novo num lugar provisório do servidor:
+### Passo A: Baixe a nova versão
+Usando um zip ou git, coloque o código novo num lugar provisório do servidor.
+
+**Opção 1 (via Arquivo ZIP):**
 ```bash
 cd /tmp
 wget http://meu-git.com/cnm_deploy_0.3.0.zip
 unzip cnm_deploy_0.3.0.zip
 cd cnm_deploy_0.3.0
+```
+
+**Opção 2 (via GitHub / Git Clone):**
+Se você gerencia o sistema clonando direto do Github, clone o repositório em uma pasta temporária (não faça pull direto na pasta de produção, pois o update.sh exige pastas separadas!):
+```bash
+cd /tmp
+# Clone a versão mais nova da branch principal
+git clone https://github.com/SeuUsuario/cnm.git cnm_novo
+cd cnm_novo
 ```
 
 ### Passo B: Rode o Update DE DENTRO da pasta nova
