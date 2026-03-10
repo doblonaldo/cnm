@@ -18,3 +18,20 @@ O atualizador executará o `0.1.1.js`, depois o `0.2.0.js` e por fim o `0.3.0.sh
 - `.sh` : Será executado via `bash`
 
 Os nomes dos arquivos **devem** seguir o SemVer padrão (ex: `1.0.5.js`), opcionalmente prefixados com `v` (ex: `v1.0.5.js`).
+
+## Como usar o update.sh
+
+Por padrão, o `update.sh` espera dois parâmetros: o diretório fonte (a nova versão) e o diretório alvo (onde o seu sistema está rodando em produção).
+
+Se você rodar sem parâmetros:
+```bash
+sudo ./update.sh
+```
+O script assumirá que as pastas são:
+- **Origem (Atualização):** `./_update` (A pasta _update de onde você disparou o comando)
+- **Destino (Produção):** `/srv/cnm`
+
+Se você quiser alterar essas pastas, basta passar como argumentos:
+```bash
+sudo ./update.sh /caminho/nova-versao /var/www/meu-sistema
+```

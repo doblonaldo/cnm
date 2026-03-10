@@ -70,33 +70,45 @@ if [ ${#PACKAGES_TO_INSTALL[@]} -gt 0 ]; then
     fi
 fi
 
-# 1. Check for Update Directory
-UPDATE_DIR=${1:-"./_update"}
+# 1. Configuração de Diretórios
+UPDATE_DIR=${1:-"$(pwd)/_update"}
+TARGET_DIR=${2:-"/srv/cnm"}
+
+# Garantir que o diretório alvo existe
+if [ ! -d "$TARGET_DIR" ]; then
+    echo ">> [INFO] Diretório alvo '$TARGET_DIR' não existe. Criando..."
+    mkdir -p "$TARGET_DIR"
+    chown -R $APP_USER:$APP_USER "$TARGET_DIR"
+fi
 
 if [ -d "$UPDATE_DIR" ]; then
-    # Capturar a versão atual via package.json do projeto
-    OLD_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")
+    # Capturar a versão atual via package.json do projeto (se existir no alvo)
+    if [ -f "$TARGET_DIR/package.json" ]; then
+        OLD_VERSION=$(node -p "require('$TARGET_DIR/package.json').version" 2>/dev/null || echo "0.1.0")
+    else
+        OLD_VERSION="0.1.0"
+    fi
     APP_VERSION=$OLD_VERSION
     VERSION_DATE=$(date +"%d%m%Y_%H%M%S")
-    BACKUP_DIR="_backups/V_${APP_VERSION}_${VERSION_DATE}"
+    BACKUP_DIR="${TARGET_DIR}/_backups/V_${APP_VERSION}_${VERSION_DATE}"
     
     echo ">> [1/7] Criando backup da versão atual (V ${APP_VERSION}) em '$BACKUP_DIR'..."
     mkdir -p "$BACKUP_DIR"
     
-    # Criamos um backup usando rsync excluindo caches pesados e arquivos temporários
+    # Criamos um backup usando rsync excluindo caches pesados e arquivos temporários da pasta alvo
     rsync -a --exclude 'node_modules/' \
              --exclude '.next/' \
              --exclude '_backups/' \
              --exclude '_update/' \
              --exclude '.git/' \
-             ./ "$BACKUP_DIR/"
+             "$TARGET_DIR/" "$BACKUP_DIR/"
              
     chown -R $APP_USER:$APP_USER "$BACKUP_DIR"
     echo ">> Backup salvo com sucesso: V ${APP_VERSION} (Data: $VERSION_DATE)"
 
-    echo ">> [2/7] Sincronizando arquivos novos de '$UPDATE_DIR'..."
+    echo ">> [2/7] Sincronizando arquivos novos de '$UPDATE_DIR' para '$TARGET_DIR'..."
     
-    # Sincroniza arquivos, preservando .env e outras pastas vitais
+    # Sincroniza arquivos, preservando .env e outras pastas vitais no alvo
     rsync -avz --checksum \
         --exclude '.env' \
         --exclude 'node_modules/' \
@@ -105,20 +117,27 @@ if [ -d "$UPDATE_DIR" ]; then
         --exclude '.next/' \
         --exclude '_update/' \
         --exclude '_backups/' \
-        "$UPDATE_DIR/" ./
+        "$UPDATE_DIR/" "$TARGET_DIR/"
         
     echo ">> Sincronização concluída."
-    NEW_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")
+    NEW_VERSION=$(node -p "require('$UPDATE_DIR/package.json').version" 2>/dev/null || echo "0.1.0")
 else
     echo ">> [1/7 & 2/7] Nenhum diretório de atualização ('$UPDATE_DIR'). Pulando geração de versão e sync."
-    OLD_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "0.1.0")
+    if [ -f "$TARGET_DIR/package.json" ]; then
+        OLD_VERSION=$(node -p "require('$TARGET_DIR/package.json').version" 2>/dev/null || echo "0.1.0")
+    else
+        OLD_VERSION="0.1.0"
+    fi
     NEW_VERSION=$OLD_VERSION
 fi
 
+# Navega para o diretório alvo para rodar o npm e scripts
+cd "$TARGET_DIR" || exit 1
+
 # 3. Update Packages
-echo ">> [3/7] Instalando novos módulos (se houver)..."
-# Garante as permissoes da pasta antes de qualquer acao em caso de git pulls como root
-chown -R $APP_USER:$APP_USER .
+echo ">> [3/7] Instalando novos módulos (se houver) em '$TARGET_DIR'..."
+# Garante as permissoes da pasta antes de qualquer acao
+chown -R $APP_USER:$APP_USER "$TARGET_DIR"
 sudo -u $APP_USER npm install
 
 # 4. Safe Database Migration (Aplica as novas colunas sem apagar a tabela)
