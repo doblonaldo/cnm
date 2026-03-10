@@ -21,17 +21,23 @@ Os nomes dos arquivos **devem** seguir o SemVer padrão (ex: `1.0.5.js`), opcion
 
 ## Como usar o update.sh
 
-Por padrão, o `update.sh` espera dois parâmetros: o diretório fonte (a nova versão) e o diretório alvo (onde o seu sistema está rodando em produção).
+O `update.sh` agora foi projetado para ser executado de **dentro da pasta da nova versão baixada** e substituirá a versão antiga de produção de forma rápida e segura. Ele puxará suas chaves e banco da pasta antiga e fará dessa nova pasta a definitiva.
 
-Se você rodar sem parâmetros:
-```bash
-sudo ./update.sh
-```
-O script assumirá que as pastas são:
-- **Origem (Atualização):** `./_update` (A pasta _update de onde você disparou o comando)
-- **Destino (Produção):** `/srv/cnm`
+**Passo a passo padrão:**
 
-Se você quiser alterar essas pastas, basta passar como argumentos:
+1. Extraia sua nova versão em uma pasta temporária (Ex: `/tmp/cnm_nova_versao`).
+2. Entre na pasta recém extraída:
+   ```bash
+   cd /tmp/cnm_nova_versao
+   ```
+3. Execute o script apontando ONDE está a sua versão antiga de produção (por padrão, ele assume `/srv/cnm`):
+   ```bash
+   sudo ./update.sh
+   ```
+
+Se sua produção não esiver em `/srv/cnm`, basta informar o caminho dela como primeiro argumento:
 ```bash
-sudo ./update.sh /caminho/nova-versao /var/www/meu-sistema
+sudo ./update.sh /var/www/meu-sistema
 ```
+
+O script cuidará de tudo: copiará o `.env` de configuração, rodará a timeline de migrações, compilará este diretório, fará o backup do diretório de produção antigo (`/srv/cnm_BACKUP...`) e finalmente moverá esta pasta para assumir o lugar na produção.

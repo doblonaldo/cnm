@@ -71,119 +71,119 @@ if [ ${#PACKAGES_TO_INSTALL[@]} -gt 0 ]; then
 fi
 
 # 1. Configuração de Diretórios
-UPDATE_DIR=${1:-"$(pwd)/_update"}
-TARGET_DIR=${2:-"/srv/cnm"}
+# Este script agora deve ser executado de DENTRO da pasta da nova versão baixada.
+CURRENT_DIR=$(pwd)
+OLD_PROD_DIR=${1:-"/srv/cnm"}
 
-# Garantir que o diretório alvo existe
-if [ ! -d "$TARGET_DIR" ]; then
-    echo ">> [INFO] Diretório alvo '$TARGET_DIR' não existe. Criando..."
-    mkdir -p "$TARGET_DIR"
-    chown -R $APP_USER:$APP_USER "$TARGET_DIR"
+echo ">> Diretório da Nova Versão: $CURRENT_DIR"
+echo ">> Diretório em Produção: $OLD_PROD_DIR"
+
+if [ "$CURRENT_DIR" == "$OLD_PROD_DIR" ]; then
+    echo ">> [ERRO] Você está executando o update de dentro da pasta de produção!"
+    echo ">> Para este formato, extraia a nova versão em uma pasta separada (ex: /tmp/cnm_v2) e execute o ./update.sh de lá."
+    exit 1
 fi
 
-if [ -d "$UPDATE_DIR" ]; then
-    # Capturar a versão atual via package.json do projeto (se existir no alvo)
-    if [ -f "$TARGET_DIR/package.json" ]; then
-        OLD_VERSION=$(node -p "require('$TARGET_DIR/package.json').version" 2>/dev/null || echo "0.1.0")
-    else
-        OLD_VERSION="0.1.0"
-    fi
-    APP_VERSION=$OLD_VERSION
-    VERSION_DATE=$(date +"%d%m%Y_%H%M%S")
-    BACKUP_DIR="${TARGET_DIR}/_backups/V_${APP_VERSION}_${VERSION_DATE}"
-    
-    echo ">> [1/7] Criando backup da versão atual (V ${APP_VERSION}) em '$BACKUP_DIR'..."
-    mkdir -p "$BACKUP_DIR"
-    
-    # Criamos um backup usando rsync excluindo caches pesados e arquivos temporários da pasta alvo
-    rsync -a --exclude 'node_modules/' \
-             --exclude '.next/' \
-             --exclude '_backups/' \
-             --exclude '_update/' \
-             --exclude '.git/' \
-             "$TARGET_DIR/" "$BACKUP_DIR/"
-             
-    chown -R $APP_USER:$APP_USER "$BACKUP_DIR"
-    echo ">> Backup salvo com sucesso: V ${APP_VERSION} (Data: $VERSION_DATE)"
-
-    echo ">> [2/7] Sincronizando arquivos novos de '$UPDATE_DIR' para '$TARGET_DIR'..."
-    
-    # Sincroniza arquivos, preservando .env e outras pastas vitais no alvo
-    rsync -avz --checksum \
-        --exclude '.env' \
-        --exclude 'node_modules/' \
-        --exclude '.git/' \
-        --exclude 'logs/' \
-        --exclude '.next/' \
-        --exclude '_update/' \
-        --exclude '_backups/' \
-        "$UPDATE_DIR/" "$TARGET_DIR/"
-        
-    echo ">> Sincronização concluída."
-    NEW_VERSION=$(node -p "require('$UPDATE_DIR/package.json').version" 2>/dev/null || echo "0.1.0")
+if [ ! -d "$OLD_PROD_DIR" ]; then
+    echo ">> [INFO] Diretório de Produção '$OLD_PROD_DIR' não encontrado."
+    echo ">> Assumindo que é uma instalação nova ou que o banco já existe na máquina."
+    OLD_VERSION="0.1.0"
 else
-    echo ">> [1/7 & 2/7] Nenhum diretório de atualização ('$UPDATE_DIR'). Pulando geração de versão e sync."
-    if [ -f "$TARGET_DIR/package.json" ]; then
-        OLD_VERSION=$(node -p "require('$TARGET_DIR/package.json').version" 2>/dev/null || echo "0.1.0")
+    # Capturar a versão atual via package.json do projeto em produção
+    if [ -f "$OLD_PROD_DIR/package.json" ]; then
+        OLD_VERSION=$(node -p "require('$OLD_PROD_DIR/package.json').version" 2>/dev/null || echo "0.1.0")
     else
         OLD_VERSION="0.1.0"
     fi
-    NEW_VERSION=$OLD_VERSION
+
+    echo ">> [1/7] Copiando Configurações e Logs da Produção (V ${OLD_VERSION})..."
+    
+    # Copiar o arquivo de ambiente (.env)
+    if [ -f "$OLD_PROD_DIR/.env" ]; then
+        cp "$OLD_PROD_DIR/.env" "$CURRENT_DIR/.env"
+        chown $APP_USER:$APP_USER "$CURRENT_DIR/.env"
+        echo "   - Arquivo .env copiado com sucesso."
+    else
+        echo "   - Aviso: Não foi encontrado o arquivo .env no diretório antigo."
+    fi
+
+    # Copiar relatórios e logs gerados localmente, se houver
+    if [ -d "$OLD_PROD_DIR/logs" ]; then
+        cp -r "$OLD_PROD_DIR/logs" "$CURRENT_DIR/logs"
+        chown -R $APP_USER:$APP_USER "$CURRENT_DIR/logs"
+        echo "   - Logs copiados com sucesso."
+    fi
 fi
 
-# Navega para o diretório alvo para rodar o npm e scripts
-cd "$TARGET_DIR" || exit 1
+NEW_VERSION=$(node -p "require('$CURRENT_DIR/package.json').version" 2>/dev/null || echo "0.1.0")
+echo ">> Atualizando da versão $OLD_VERSION para a versão $NEW_VERSION."
 
-# 3. Update Packages
-echo ">> [3/7] Instalando novos módulos (se houver) em '$TARGET_DIR'..."
-# Garante as permissoes da pasta antes de qualquer acao
-chown -R $APP_USER:$APP_USER "$TARGET_DIR"
-# Force npm install to get dependencies like recharts even if cache is stale
+# 2. Update Packages (Na nova pasta)
+echo ">> [2/7] Instalando dependências Node na nova versão..."
+chown -R $APP_USER:$APP_USER "$CURRENT_DIR"
 sudo -u $APP_USER npm install --legacy-peer-deps
 
-# 4. Safe Database Migration (Aplica as novas colunas sem apagar a tabela)
-echo ">> [4/7] Atualizando estrutura do Banco de Dados..."
+# 3. Safe Database Migration
+echo ">> [3/7] Atualizando estrutura do Banco de Dados PostgreSQL..."
 sudo -u $APP_USER npx prisma migrate deploy
 
-# 5. Seeding Specific Addons (Injetar as atualizações da UI Local)
-echo ">> [5/7] Injetando Baternap, Wanguard e recursos locais no Banco..."
+# 4. Seeding Specific Addons
+echo ">> [4/7] Injetando Baternap, Wanguard e recursos locais no Banco..."
 sudo -u $APP_USER node scripts/seed-baternap.js
 sudo -u $APP_USER node scripts/seed-wanguard.js
 
-# 6. Executar updates da Timeline
-echo ">> [6/7] Verificando e executando scripts de Timeline..."
+# 5. Executar updates da Timeline
+echo ">> [5/7] Verificando e executando scripts de Timeline..."
 if [ -f "scripts/run-timeline-updates.js" ]; then
     sudo -u $APP_USER node scripts/run-timeline-updates.js "$OLD_VERSION" "$NEW_VERSION"
 else
-    echo ">> Script run-timeline-updates.js não encontrado. Pulando."
+    echo ">> Script run-timeline-updates.js não encontrado na nova versão."
 fi
 
-# 7. Build Production
-echo ">> [7/7] Compilando nova versão..."
+# 6. Build Production
+echo ">> [6/7] Compilando nova versão..."
 sudo -u $APP_USER npm run build
 
-echo ""
+# 7. Substituindo a Produção
+echo ">> [7/7] Promovendo nova versão para a pasta de produção ($OLD_PROD_DIR)..."
+
+if command -v pm2 &> /dev/null; then
+    echo "   - Parando aplicação no PM2..."
+    sudo -u "$APP_USER" pm2 stop cnm 2>/dev/null || true
+fi
+
+if [ -d "$OLD_PROD_DIR" ]; then
+    VERSION_DATE=$(date +"%d%m%Y_%H%M%S")
+    BACKUP_DIR="${OLD_PROD_DIR}_BACKUP_${OLD_VERSION}_${VERSION_DATE}"
+    echo "   - Movendo diretório antigo para: $BACKUP_DIR"
+    mv "$OLD_PROD_DIR" "$BACKUP_DIR"
+fi
+
+echo "   - Movendo nova versão para a pasta definitiva..."
+# Movimenta o diretorio atual inteirinho para a pasta de producao velha
+mv "$CURRENT_DIR" "$OLD_PROD_DIR"
+cd "$OLD_PROD_DIR" || exit 1
+
+# Garante que as permissoes finais estao corretas pos-move
+chown -R $APP_USER:$APP_USER "$OLD_PROD_DIR"
+
 echo "================================================="
 echo "   ATUALIZAÇÃO CONCLUÍDA!                        "
 echo "================================================="
-echo "A nova versão já está compilada."
 
 if command -v pm2 &> /dev/null; then
     # Checar se o app já está rodando no PM2
     if sudo -u "$APP_USER" pm2 list 2>/dev/null | grep -q "cnm"; then
-        echo ">> Recarregando a aplicação no PM2 (Zero-Downtime se suportado)..."
+        echo ">> Recarregando a aplicação no PM2 a partir de $OLD_PROD_DIR..."
         sudo -u "$APP_USER" pm2 reload cnm || sudo -u "$APP_USER" pm2 restart cnm
     else
         echo ">> Adicionando a aplicação CNM ao PM2..."
-        # Iniciar no PM2 a partir do TARGET_DIR processando npm como start
         sudo -u "$APP_USER" pm2 start npm --name "cnm" -- start
         sudo -u "$APP_USER" pm2 save
     fi
 else
     echo ">> [INFO] PM2 não detectado no sistema."
-    echo "Sugestão: Instale o PM2 globalmente ('npm install -g pm2') para gerenciar o processo."
-    echo "IMPORTANTE: Reinicie o processo Node/PM2/SystemD"
-    echo "para que as alterações entrem no ar ativamente."
-    echo "Ex: Ctrl+C e 'npm run start' ou 'pm2 restart cnm'"
+    echo "IMPORTANTE: Inicie o processo Node/PM2/SystemD"
+    echo "em $OLD_PROD_DIR para colocar no ar."
 fi
 echo "================================================="

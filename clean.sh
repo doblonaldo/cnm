@@ -11,7 +11,7 @@ echo " - Dependências e caches (.next, node_modules)"
 echo " - Arquivo de configuração de chaves (.env)"
 echo " - Banco de Dados PostgreSQL (cnm) e Usuário"
 echo " - Arquivos globais de Log (/var/log/cnm)"
-echo " - Regras persistentes de Firewall e Proxy (Apache/Iptables)"
+echo " - Proxy Apache Reverso (Se configurado)"
 echo " - Todos os Pacotes Instalados (Node.js, PostgreSQL, Apache, Certbot)"
 echo "================================================="
 
@@ -56,22 +56,13 @@ rm -f /etc/logrotate.d/cnm
 rm -f /etc/cron.weekly/cnm-db-prune
 echo "[OK] Logs globais deletados."
 
-echo ">> 5. Removendo regras de Firewall e Apache Proxy..."
-if command -v iptables >/dev/null 2>&1; then
-    iptables -F
-    iptables -X
-    if command -v netfilter-persistent >/dev/null 2>&1; then
-        netfilter-persistent save >/dev/null 2>&1 || true
-    elif command -v iptables-save >/dev/null 2>&1; then
-        iptables-save > /etc/sysconfig/iptables 2>/dev/null || true
-    fi
-fi
+echo ">> 5. Removendo proxy Apache..."
 if command -v apache2 >/dev/null 2>&1; then
     a2dissite cnm.conf >/dev/null 2>&1 || true
     rm -f /etc/apache2/sites-available/cnm.conf
     systemctl restart apache2 >/dev/null 2>&1 || true
 fi
-echo "[OK] Firewall liberado e Proxy removido."
+echo "[OK] Proxy Apache removido."
 
 echo ">> 6. Desinstalando pacotes Base do Sistema Operacional..."
 if [ -f /etc/os-release ]; then
@@ -82,16 +73,16 @@ fi
 
 if [[ "$OS" == "ubuntu" || "$OS" == "debian" || "$OS_LIKE" == *"ubuntu"* || "$OS_LIKE" == *"debian"* ]]; then
     echo "   - Removendo via APT..."
-    apt-get purge -y nodejs postgresql postgresql-contrib apache2 certbot python3-certbot-apache iptables-persistent >/dev/null 2>&1 || true
+    apt-get purge -y nodejs postgresql postgresql-contrib apache2 certbot python3-certbot-apache >/dev/null 2>&1 || true
     apt-get autoremove -y >/dev/null 2>&1 || true
 elif [[ "$OS" == "centos" || "$OS" == "rhel" || "$OS" == "fedora" || "$OS" == "rocky" || "$OS" == "alma" || "$OS_LIKE" == *"rhel"* || "$OS_LIKE" == *"fedora"* ]]; then
     PKG_MAN=$(command -v dnf || command -v yum)
     echo "   - Removendo via $PKG_MAN..."
-    $PKG_MAN remove -y nodejs postgresql-server postgresql-contrib httpd certbot python3-certbot-apache iptables-services >/dev/null 2>&1 || true
+    $PKG_MAN remove -y nodejs postgresql-server postgresql-contrib httpd certbot python3-certbot-apache >/dev/null 2>&1 || true
     $PKG_MAN autoremove -y >/dev/null 2>&1 || true
 elif [[ "$OS" == "arch" || "$OS" == "cachyos" || "$OS" == "manjaro" || "$OS_LIKE" == *"arch"* ]]; then
     echo "   - Removendo via Pacman..."
-    pacman -Rns --noconfirm nodejs npm postgresql apache certbot certbot-apache iptables >/dev/null 2>&1 || true
+    pacman -Rns --noconfirm nodejs npm postgresql apache certbot certbot-apache >/dev/null 2>&1 || true
 fi
 echo "[OK] Dependências do Sistema (Node/PG/Apache) desinstaladas."
 
